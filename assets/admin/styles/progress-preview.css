@@ -333,3 +333,104 @@
 	cursor: pointer;
 	background: var(--cm-canvas);
 }
+
+/* ── Style 5: Progressive Reveal ─────────────────────────────────────────── */
+.cm-prev.progressive-reveal {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.cm-prev__rev-earned {
+	display: flex;
+	gap: 6px;
+	flex-wrap: wrap;
+}
+
+.cm-prev__rev-badge {
+	font-size: 11px;
+	font-weight: 600;
+	padding: 3px 10px;
+	border-radius: 100px;
+	white-space: nowrap;
+}
+
+.cm-prev__rev-target {
+	background: var(--cm-canvas);
+	border-radius: var(--cm-radius-lg);
+	padding: 14px 16px;
+	box-shadow: 0 0 0 1.5px var(--cm-hairline), 0 4px 12px rgba(0,0,0,.06);
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.cm-prev__rev-header {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.cm-prev__rev-emoji {
+	font-size: 28px;
+	flex-shrink: 0;
+	line-height: 1;
+}
+
+.cm-prev__rev-label { font-size: 14px; font-weight: 600; }
+.cm-prev__rev-sublabel { font-size: 11px; font-family: var(--cm-font-mono); margin-top: 2px; }
+
+.cm-prev__rev-pct {
+	margin-left: auto;
+	font-size: 20px;
+	font-weight: 700;
+	letter-spacing: -1px;
+}
+
+.cm-prev__rev-track {
+	height: 10px;
+	border-radius: 100px;
+	overflow: hidden;
+}
+
+.cm-prev__rev-fill {
+	height: 100%;
+	border-radius: 100px;
+	transition: width 1s ease;
+}
+
+.cm-prev__rev-fill.--anim {
+	position: relative;
+	overflow: hidden;
+}
+.cm-prev__rev-fill.--anim::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(90deg, transparent 30%, rgba(255,255,255,0.4) 50%, transparent 70%);
+	animation: cm-shimmer 1.8s ease infinite;
+}
+
+.cm-prev__rev-remaining {
+	font-size: 12px;
+	text-align: center;
+}
+
+.cm-prev__rev-locked {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 12px;
+	border: 1.5px dashed;
+	border-radius: var(--cm-radius-md);
+	font-size: 12px;
+	opacity: 0.7;
+}
+
+.cm-prev__rev-complete {
+	text-align: center;
+	padding: 16px;
+	font-size: 15px;
+	border-radius: var(--cm-radius-md);
+	background: var(--cm-canvas-soft);
+}

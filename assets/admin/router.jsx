@@ -11,10 +11,9 @@ export function Router() {
 	return (
 		<Routes>
 			<Route path="/"                          element={ <Navigate to="/campaigns" replace /> } />
-			<Route path="/campaigns"                  element={ <CampaignList /> } />
-			<Route path="/campaigns/new"              element={ <CampaignEditor /> } />
-			<Route path="/campaigns/:id/view"         element={ <CampaignView /> } />
-			<Route path="/campaigns/:id"              element={ <CampaignEditor /> } />
+			<Route path="/campaigns"              element={ <CampaignList /> } />
+			<Route path="/campaigns/:id/view"     element={ <CampaignView /> } />
+			<Route path="/campaigns/:id"          element={ <CampaignEditor /> } />
 			<Route path="/analytics"                  element={ <AnalyticsDashboard /> } />
 			<Route path="/settings"                   element={ <SettingsPage /> } />
 			<Route path="/import-export"              element={ <ImportExportPage /> } />
