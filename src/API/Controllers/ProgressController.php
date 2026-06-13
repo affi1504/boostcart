@@ -32,6 +32,18 @@ class ProgressController {
 	}
 
 	public function get_progress( \WP_REST_Request $request ): \WP_REST_Response {
+		// WooCommerce does not initialize the cart session for REST requests.
+		// Force-load it so the evaluator can read cart contents and totals.
+		if ( ! WC()->cart || ! did_action( 'woocommerce_cart_loaded_from_session' ) ) {
+			if ( function_exists( 'wc_load_cart' ) ) {
+				wc_load_cart();
+			} elseif ( WC()->session ) {
+				WC()->session->init();
+				WC()->cart->init();
+				WC()->customer = new \WC_Customer( get_current_user_id(), true );
+			}
+		}
+
 		if ( ! WC()->cart ) {
 			return new \WP_REST_Response( [], 200 );
 		}
