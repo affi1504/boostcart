@@ -17,6 +17,11 @@ function parseValue( v ) {
 	return { year: y, month: m - 1, day: d, hour: hr || 0, minute: min || 0 };
 }
 
+function toDateObj( dt ) {
+	if ( ! dt ) return null;
+	return new Date( dt.year, dt.month, dt.day );
+}
+
 function toValue( dt ) {
 	if ( ! dt ) return '';
 	const pad = n => String( n ).padStart( 2, '0' );
@@ -44,16 +49,42 @@ function buildCalendar( year, month ) {
 	return cells;
 }
 
-export function DateTimePicker( { label, hint, value = '', onChange } ) {
+function startOfDay( date ) {
+	const d = new Date( date );
+	d.setHours( 0, 0, 0, 0 );
+	return d;
+}
+
+/**
+ * @param {string} value        Current value "YYYY-MM-DD HH:MM:SS" or ""
+ * @param {function} onChange   Called with new value string
+ * @param {string} label
+ * @param {string} hint
+ * @param {Date|null} minDate   Earliest selectable date (default: today)
+ * @param {Date|null} maxDate   Latest selectable date
+ */
+export function DateTimePicker( { label, hint, value = '', onChange, minDate = null, maxDate = null } ) {
 	const parsed                      = parseValue( value );
 	const now                         = new Date();
+	const todayStart                  = startOfDay( now );
+
+	// Default minDate = today (can't pick past).
+	const effectiveMin = minDate ? startOfDay( minDate ) : todayStart;
+
 	const [ open, setOpen ]           = useState( false );
 	const [ viewYear, setViewYear ]   = useState( parsed?.year  ?? now.getFullYear() );
 	const [ viewMonth, setViewMonth ] = useState( parsed?.month ?? now.getMonth() );
-	const [ tab, setTab ]             = useState( 'date' ); // 'date' | 'time'
+	const [ tab, setTab ]             = useState( 'date' );
 	const ref                         = useRef( null );
 
-	// Close on outside click.
+	// Sync view to selected value when it changes externally.
+	useEffect( () => {
+		if ( parsed ) {
+			setViewYear( parsed.year );
+			setViewMonth( parsed.month );
+		}
+	}, [ value ] );
+
 	useEffect( () => {
 		function handler( e ) {
 			if ( ref.current && ! ref.current.contains( e.target ) ) {
@@ -64,16 +95,24 @@ export function DateTimePicker( { label, hint, value = '', onChange } ) {
 		return () => document.removeEventListener( 'mousedown', handler );
 	}, [] );
 
+	function isDayDisabled( day ) {
+		const d = startOfDay( new Date( viewYear, viewMonth, day ) );
+		if ( d < effectiveMin ) return true;
+		if ( maxDate && d > startOfDay( maxDate ) ) return true;
+		return false;
+	}
+
 	function selectDay( day ) {
+		if ( isDayDisabled( day ) ) return;
 		const next = {
 			year:   viewYear,
 			month:  viewMonth,
 			day,
-			hour:   parsed?.hour   ?? 0,
+			hour:   parsed?.hour   ?? 9,
 			minute: parsed?.minute ?? 0,
 		};
 		onChange( toValue( next ) );
-		setTab( 'time' ); // auto-advance to time after picking date
+		setTab( 'time' );
 	}
 
 	function setHour( h ) {
@@ -87,22 +126,29 @@ export function DateTimePicker( { label, hint, value = '', onChange } ) {
 	}
 
 	function prevMonth() {
+		// Don't go to months entirely in the past.
+		const prevMonthEnd = new Date( viewYear, viewMonth, 0 ); // last day of prev month
+		if ( startOfDay( prevMonthEnd ) < effectiveMin ) return;
 		if ( viewMonth === 0 ) { setViewMonth( 11 ); setViewYear( y => y - 1 ); }
 		else setViewMonth( m => m - 1 );
 	}
+
 	function nextMonth() {
 		if ( viewMonth === 11 ) { setViewMonth( 0 ); setViewYear( y => y + 1 ); }
 		else setViewMonth( m => m + 1 );
 	}
 
+	function canGoPrev() {
+		const prevMonthEnd = new Date( viewYear, viewMonth, 0 );
+		return startOfDay( prevMonthEnd ) >= effectiveMin;
+	}
+
 	const cells = buildCalendar( viewYear, viewMonth );
-	const today = new Date();
 
 	return (
 		<div className="cm-field cm-dtp-field" ref={ ref }>
 			{ label && <label className="cm-field__label">{ label }</label> }
 
-			{/* Trigger button */}
 			<button
 				type="button"
 				className={ `cm-dtp-trigger${ open ? ' --open' : '' }${ ! parsed ? ' --empty' : '' }` }
@@ -122,16 +168,10 @@ export function DateTimePicker( { label, hint, value = '', onChange } ) {
 				) }
 			</button>
 
-			{/* Popover */}
 			{ open && (
 				<div className="cm-dtp-popover">
-					{/* Tab bar */}
 					<div className="cm-dtp-tabs">
-						<button
-							type="button"
-							className={ `cm-dtp-tab${ tab === 'date' ? ' --active' : '' }` }
-							onClick={ () => setTab( 'date' ) }
-						>
+						<button type="button" className={ `cm-dtp-tab${ tab === 'date' ? ' --active' : '' }` } onClick={ () => setTab( 'date' ) }>
 							📅 { __( 'Date', 'boostcart' ) }
 						</button>
 						<button
@@ -145,43 +185,52 @@ export function DateTimePicker( { label, hint, value = '', onChange } ) {
 
 					{ tab === 'date' && (
 						<div className="cm-dtp-calendar">
-							{/* Month nav */}
 							<div className="cm-dtp-cal-nav">
-								<button type="button" className="cm-dtp-nav-btn" onClick={ prevMonth }>‹</button>
+								<button
+									type="button"
+									className={ `cm-dtp-nav-btn${ ! canGoPrev() ? ' --disabled' : '' }` }
+									onClick={ prevMonth }
+									disabled={ ! canGoPrev() }
+								>‹</button>
 								<span className="cm-dtp-cal-title">{ MONTHS[ viewMonth ] } { viewYear }</span>
 								<button type="button" className="cm-dtp-nav-btn" onClick={ nextMonth }>›</button>
 							</div>
 
-							{/* Day labels */}
 							<div className="cm-dtp-cal-grid">
 								{ DAYS.map( d => (
 									<div key={ d } className="cm-dtp-day-label">{ d }</div>
 								) ) }
-
-								{/* Day cells */}
 								{ cells.map( ( day, i ) => {
 									if ( ! day ) return <div key={ `e${ i }` } />;
+									const disabled  = isDayDisabled( day );
 									const isSelected = parsed && parsed.day === day && parsed.month === viewMonth && parsed.year === viewYear;
-									const isToday    = today.getDate() === day && today.getMonth() === viewMonth && today.getFullYear() === viewYear;
+									const isToday    = now.getDate() === day && now.getMonth() === viewMonth && now.getFullYear() === viewYear;
 									return (
 										<button
 											key={ day }
 											type="button"
-											className={ `cm-dtp-day${ isSelected ? ' --selected' : '' }${ isToday ? ' --today' : '' }` }
-											onClick={ () => selectDay( day ) }
+											className={ `cm-dtp-day${ isSelected ? ' --selected' : '' }${ isToday ? ' --today' : '' }${ disabled ? ' --disabled' : '' }` }
+											onClick={ () => ! disabled && selectDay( day ) }
+											disabled={ disabled }
+											aria-disabled={ disabled }
 										>
 											{ day }
 										</button>
 									);
 								} ) }
 							</div>
+
+							{ effectiveMin > todayStart && (
+								<p className="cm-dtp-cal-note">
+									📅 { __( 'Dates before start date are unavailable', 'boostcart' ) }
+								</p>
+							) }
 						</div>
 					) }
 
 					{ tab === 'time' && parsed && (
 						<div className="cm-dtp-time">
 							<div className="cm-dtp-time-cols">
-								{/* Hour column */}
 								<div className="cm-dtp-time-col">
 									<div className="cm-dtp-time-col-label">{ __( 'Hour', 'boostcart' ) }</div>
 									<div className="cm-dtp-time-scroll">
@@ -197,10 +246,7 @@ export function DateTimePicker( { label, hint, value = '', onChange } ) {
 										) ) }
 									</div>
 								</div>
-
 								<div className="cm-dtp-time-sep">:</div>
-
-								{/* Minute column */}
 								<div className="cm-dtp-time-col">
 									<div className="cm-dtp-time-col-label">{ __( 'Min', 'boostcart' ) }</div>
 									<div className="cm-dtp-time-scroll">
@@ -217,33 +263,22 @@ export function DateTimePicker( { label, hint, value = '', onChange } ) {
 									</div>
 								</div>
 							</div>
-
-							{/* AM/PM quick toggle */}
 							<div className="cm-dtp-ampm">
-								<button
-									type="button"
-									className={ `cm-dtp-ampm-btn${ parsed.hour < 12 ? ' --active' : '' }` }
-									onClick={ () => parsed.hour >= 12 && setHour( parsed.hour - 12 ) }
-								>AM</button>
-								<button
-									type="button"
-									className={ `cm-dtp-ampm-btn${ parsed.hour >= 12 ? ' --active' : '' }` }
-									onClick={ () => parsed.hour < 12 && setHour( parsed.hour + 12 ) }
-								>PM</button>
+								<button type="button" className={ `cm-dtp-ampm-btn${ parsed.hour < 12 ? ' --active' : '' }` }
+									onClick={ () => parsed.hour >= 12 && setHour( parsed.hour - 12 ) }>AM</button>
+								<button type="button" className={ `cm-dtp-ampm-btn${ parsed.hour >= 12 ? ' --active' : '' }` }
+									onClick={ () => parsed.hour < 12 && setHour( parsed.hour + 12 ) }>PM</button>
 							</div>
 						</div>
 					) }
 
-					{/* Footer */}
 					<div className="cm-dtp-footer">
-						{ parsed && (
+						{ parsed ? (
 							<span className="cm-dtp-footer__value">{ formatDisplay( parsed ) }</span>
+						) : (
+							<span className="cm-dtp-footer__value" style={ { opacity: 0.4 } }>{ __( 'No date selected', 'boostcart' ) }</span>
 						) }
-						<button
-							type="button"
-							className="cm-dtp-footer__done"
-							onClick={ () => setOpen( false ) }
-						>
+						<button type="button" className="cm-dtp-footer__done" onClick={ () => setOpen( false ) }>
 							{ __( 'Done', 'boostcart' ) } ✓
 						</button>
 					</div>

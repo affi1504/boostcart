@@ -272,14 +272,15 @@ export function CampaignEditor() {
 						<div className="cm-field-row" style={ { marginTop: 16 } }>
 							<DateTimePicker
 								label={ __( 'Start Date', 'boostcart' ) }
-								hint={ __( 'Campaign becomes active at this time. Leave blank to activate immediately on the scheduled date.', 'boostcart' ) }
+								hint={ __( 'Campaign becomes active at this time.', 'boostcart' ) }
 								value={ campaign.start_date || '' }
 								onChange={ v => set( 'start_date', v ) }
 							/>
 							<DateTimePicker
 								label={ __( 'End Date', 'boostcart' ) }
-								hint={ __( 'Campaign expires at this time. Leave blank to run indefinitely.', 'boostcart' ) }
+								hint={ __( 'Leave blank to run indefinitely.', 'boostcart' ) }
 								value={ campaign.end_date || '' }
+								minDate={ campaign.start_date ? new Date( campaign.start_date ) : null }
 								onChange={ v => set( 'end_date', v ) }
 							/>
 						</div>

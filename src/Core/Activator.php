@@ -22,9 +22,44 @@ class Activator {
 		if ( version_compare( $db_version, '2.0', '>=' ) ) {
 			return;
 		}
-		self::create_tables(); // dbDelta handles ADD COLUMN for existing tables.
+		self::create_tables();
+		self::alter_milestones_table(); // dbDelta doesn't reliably ADD columns — use ALTER TABLE.
 		self::migrate_trigger_type_to_milestones();
 		update_option( 'cm_db_version', '2.0' );
+	}
+
+	/**
+	 * Explicitly ADD columns to cm_milestones if they don't exist.
+	 * dbDelta only creates tables reliably; for ALTER TABLE we do it ourselves.
+	 */
+	private static function alter_milestones_table(): void {
+		global $wpdb;
+		$table = $wpdb->prefix . 'cm_milestones';
+
+		$columns_to_add = [
+			'trigger_type'       => "VARCHAR(30) NOT NULL DEFAULT 'cart_value' AFTER sort_order",
+			'trigger_target_ids' => "JSON NULL AFTER trigger_type",
+			'comparator'         => "VARCHAR(2) NOT NULL DEFAULT '>=' AFTER trigger_target_ids",
+		];
+
+		foreach ( $columns_to_add as $column => $definition ) {
+			// Check if column already exists.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$exists = $wpdb->get_var( $wpdb->prepare(
+				"SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+				 WHERE TABLE_SCHEMA = DATABASE()
+				   AND TABLE_NAME = %s
+				   AND COLUMN_NAME = %s",
+				$table,
+				$column
+			) );
+
+			if ( ! $exists ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$wpdb->query( "ALTER TABLE {$table} ADD COLUMN {$column} {$definition}" );
+				\CartMilestones\Core\Logger::info( "Added column {$column} to {$table}" );
+			}
+		}
 	}
 
 	private static function create_tables(): void {
