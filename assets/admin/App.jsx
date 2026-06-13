@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { __ } from '@wordpress/i18n';
 import { Router } from './router';
 import './styles/globals.css';
+import './styles/components.css';
 
 const NAV_LINKS = [
 	{ to: '/campaigns',    label: __( 'Campaigns', 'boostcart' ) },

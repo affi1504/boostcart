@@ -264,3 +264,73 @@
 	cursor: pointer;
 	padding: 4px 0;
 }
+
+/* ── Section hints ────────────────────────────────────────────────────────── */
+.cm-section-hint {
+	font-size: 13px;
+	color: var(--cm-body);
+	margin: -8px 0 var(--cm-space-md);
+	line-height: 1.5;
+}
+
+/* ── Hint box (empty state inside builders) ───────────────────────────────── */
+.cm-hint-box {
+	font-size: 13px;
+	color: var(--cm-body);
+	background: var(--cm-canvas-soft);
+	border: 1px dashed var(--cm-hairline);
+	border-radius: var(--cm-radius-md);
+	padding: var(--cm-space-md);
+	margin-bottom: var(--cm-space-sm);
+	line-height: 1.5;
+}
+
+/* ── Notice / error banner ────────────────────────────────────────────────── */
+.cm-notice {
+	padding: var(--cm-space-sm) var(--cm-space-md);
+	border-radius: var(--cm-radius-md);
+	font-size: 14px;
+	margin-bottom: var(--cm-space-md);
+}
+.cm-notice--error {
+	background: var(--cm-error-soft);
+	color: var(--cm-error-deep);
+	border: 1px solid var(--cm-error-soft);
+}
+.cm-notice--success {
+	background: #d3e5ff;
+	color: #0761d1;
+	border: 1px solid #a8cdff;
+}
+
+/* ── Milestone best-value toggle & remove buttons ─────────────────────────── */
+.cm-milestone-row__best-value-toggle {
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--cm-body);
+	padding: 2px 8px;
+	border-radius: var(--cm-radius-full);
+	border: 1px solid var(--cm-hairline);
+	background: var(--cm-canvas);
+	cursor: pointer;
+	transition: background 0.15s, color 0.15s;
+}
+.cm-milestone-row__best-value-toggle:hover { background: var(--cm-canvas-soft-2); }
+.cm-milestone-row--best-value .cm-milestone-row__best-value-toggle {
+	background: #fff4e0;
+	color: #a05c00;
+	border-color: #f5a623;
+}
+
+.cm-milestone-row__remove {
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--cm-error);
+	padding: 2px 8px;
+	border-radius: var(--cm-radius-full);
+	border: 1px solid var(--cm-error-soft);
+	background: var(--cm-canvas);
+	cursor: pointer;
+	transition: background 0.15s;
+}
+.cm-milestone-row__remove:hover { background: var(--cm-error-soft); }
