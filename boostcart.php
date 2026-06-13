@@ -3,7 +3,7 @@
  * Plugin Name:       Boostcart for WooCommerce
  * Plugin URI:        https://github.com/affi1504/boostcart
  * Description:       Increase Average Order Value through milestone-based rewards, progress tracking, gamification, and intelligent cart incentives.
- * Version:           1.0.1
+ * Version:           1.0.2
  * Requires at least: 6.4
  * Requires PHP:      8.1
  * Author:            affi1504
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'CM_VERSION', '1.0.1' );
+define( 'CM_VERSION', '1.0.2' );
 define( 'CM_PLUGIN_FILE', __FILE__ );
 define( 'CM_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'CM_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
