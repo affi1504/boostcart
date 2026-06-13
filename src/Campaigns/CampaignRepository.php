@@ -145,6 +145,11 @@ class CampaignRepository {
 			$data['target_ids'] = wp_json_encode( $data['target_ids'] );
 		}
 		unset( $data['id'], $data['created_at'], $data['updated_at'] );
+
+		// Remove null values — wpdb cannot bind NULL with %s/%d format strings.
+		// Columns with no value should simply be omitted from INSERT/UPDATE.
+		$data = array_filter( $data, static fn( $v ) => null !== $v );
+
 		return $data;
 	}
 
