@@ -34,8 +34,9 @@ class Assets {
 			'cm-admin',
 			'cmAdminData',
 			[
-				'restUrl'   => esc_url_raw( rest_url( 'boostcart/v1/' ) ),
-				'nonce'     => wp_create_nonce( 'wp_rest' ),
+				'restUrl'     => esc_url_raw( rest_url( 'boostcart/v1/' ) ),
+				'restRootUrl' => esc_url_raw( rest_url() ),
+				'nonce'       => wp_create_nonce( 'wp_rest' ),
 				'version'   => CM_VERSION,
 				'currency'  => [
 					'symbol'    => html_entity_decode( get_woocommerce_currency_symbol() ),
