@@ -35,6 +35,14 @@ class AnalyticsRepository {
 	public function get_summary( array $args = [] ): array {
 		global $wpdb;
 
+		// Guard: table may not exist on older installs that didn't re-activate.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$table_exists = $wpdb->get_var( "SHOW TABLES LIKE '{$this->table}'" );
+		if ( ! $table_exists ) {
+			\CartMilestones\Core\Logger::warning( 'Analytics table missing — run plugin deactivate/activate to recreate.' );
+			return [];
+		}
+
 		$where  = '1=1';
 		$values = [];
 
@@ -66,6 +74,12 @@ class AnalyticsRepository {
 		}
 
 		$row = $wpdb->get_row( $sql, ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
+
+		if ( $wpdb->last_error ) {
+			\CartMilestones\Core\Logger::error( 'Analytics query failed', [ 'error' => $wpdb->last_error, 'sql' => $sql ] );
+			return [];
+		}
+
 		return $row ?? [];
 	}
 

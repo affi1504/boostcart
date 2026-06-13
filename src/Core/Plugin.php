@@ -35,6 +35,8 @@ class Plugin {
 	}
 
 	public function run(): void {
+		// Boot logger early so all subsequent code can use it.
+		Logger::boot();
 		$this->define_i18n_hooks();
 		$this->define_update_hooks();
 		$this->define_admin_hooks();

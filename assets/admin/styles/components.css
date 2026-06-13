@@ -255,7 +255,53 @@
 .cm-cond-leaf .cm-field { flex: 1; min-width: 120px; }
 .cm-cond-leaf .cm-field__input, .cm-cond-leaf .cm-field__select { height: 30px; font-size: 13px; }
 
-/* ── Settings checkboxes ──────────────────────────────────────────────────── */
+/* ── Debug table ──────────────────────────────────────────────────────────── */
+.cm-debug-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 13px;
+}
+.cm-debug-table td {
+	padding: 6px 8px;
+	border-bottom: 1px solid var(--cm-hairline);
+	vertical-align: top;
+}
+.cm-debug-table tr:last-child td { border-bottom: none; }
+.cm-debug-table td:first-child { color: var(--cm-body); width: 200px; }
+.cm-debug-table code {
+	font-family: var(--cm-font-mono);
+	font-size: 12px;
+	background: var(--cm-canvas-soft-2);
+	padding: 2px 5px;
+	border-radius: var(--cm-radius-xs);
+	word-break: break-all;
+}
+
+/* ── Settings tab bar ─────────────────────────────────────────────────────── */
+.cm-tab-bar {
+	display: flex;
+	gap: 4px;
+	border-bottom: 1px solid var(--cm-hairline);
+	padding-bottom: 0;
+}
+.cm-tab-btn {
+	background: none;
+	border: none;
+	border-bottom: 2px solid transparent;
+	padding: 8px 16px;
+	font-size: 14px;
+	font-weight: 500;
+	font-family: var(--cm-font-sans);
+	color: var(--cm-body);
+	cursor: pointer;
+	margin-bottom: -1px;
+	transition: color 0.15s, border-color 0.15s;
+}
+.cm-tab-btn:hover { color: var(--cm-ink); }
+.cm-tab-btn--active {
+	color: var(--cm-ink);
+	border-bottom-color: var(--cm-ink);
+}
 .cm-checkbox-row {
 	display: flex;
 	align-items: center;

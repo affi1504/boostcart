@@ -111,9 +111,12 @@ class CampaignsController {
 
 	public function create( \WP_REST_Request $request ): \WP_REST_Response|\WP_Error {
 		try {
-			$campaign = $this->service->create( $request->get_params() );
+			$data     = $this->extract_campaign_data( $request );
+			$campaign = $this->service->create( $data );
+			\CartMilestones\Core\Logger::info( 'Campaign created', [ 'id' => $campaign['id'], 'name' => $campaign['name'] ] );
 			return new \WP_REST_Response( $campaign, 201 );
-		} catch ( \InvalidArgumentException $e ) {
+		} catch ( \Throwable $e ) {
+			\CartMilestones\Core\Logger::error( 'Campaign create failed', [ 'message' => $e->getMessage(), 'trace' => $e->getTraceAsString() ] );
 			return new \WP_Error( 'cm_invalid', $e->getMessage(), [ 'status' => 422 ] );
 		}
 	}
@@ -121,11 +124,32 @@ class CampaignsController {
 	public function update( \WP_REST_Request $request ): \WP_REST_Response|\WP_Error {
 		$id = (int) $request->get_param( 'id' );
 		try {
-			$campaign = $this->service->update( $id, $request->get_params() );
+			$data     = $this->extract_campaign_data( $request );
+			$campaign = $this->service->update( $id, $data );
+			\CartMilestones\Core\Logger::info( 'Campaign updated', [ 'id' => $id ] );
 			return new \WP_REST_Response( $campaign, 200 );
-		} catch ( \InvalidArgumentException $e ) {
+		} catch ( \Throwable $e ) {
+			\CartMilestones\Core\Logger::error( 'Campaign update failed', [ 'id' => $id, 'message' => $e->getMessage(), 'trace' => $e->getTraceAsString() ] );
 			return new \WP_Error( 'cm_invalid', $e->getMessage(), [ 'status' => 422 ] );
 		}
+	}
+
+	/**
+	 * Extract only whitelisted campaign fields from the request.
+	 * Prevents WordPress internal route params from leaking into the DB.
+	 */
+	private function extract_campaign_data( \WP_REST_Request $request ): array {
+		$allowed = [
+			'name', 'status', 'trigger_type', 'stacking_mode',
+			'target_scope', 'target_ids', 'start_date', 'end_date', 'priority',
+		];
+		$data = [];
+		foreach ( $allowed as $key ) {
+			if ( null !== $request->get_param( $key ) ) {
+				$data[ $key ] = $request->get_param( $key );
+			}
+		}
+		return $data;
 	}
 
 	public function delete( \WP_REST_Request $request ): \WP_REST_Response|\WP_Error {
