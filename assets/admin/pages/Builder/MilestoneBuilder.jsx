@@ -6,13 +6,11 @@ import { Select } from '../../components/ui/Select';
 import { EntityPicker } from '../../components/ui/EntityPicker';
 
 const TRIGGER_OPTIONS = [
-	{ value: 'cart_value',      label: __( 'Cart Value', 'boostcart' ) },
-	{ value: 'product_qty',     label: __( 'Product Quantity', 'boostcart' ) },
-	{ value: 'category_qty',    label: __( 'Category Quantity', 'boostcart' ) },
-	{ value: 'category_spend',  label: __( 'Category Spend', 'boostcart' ) },
-	{ value: 'product_spend',   label: __( 'Product Spend', 'boostcart' ) },
-	{ value: 'lifetime_spend',  label: __( 'Lifetime Spend', 'boostcart' ) },
-	{ value: 'lifetime_orders', label: __( 'Lifetime Orders', 'boostcart' ) },
+	{ value: 'cart_value',     label: __( 'Cart Value', 'boostcart' ) },
+	{ value: 'product_qty',    label: __( 'Product Quantity', 'boostcart' ) },
+	{ value: 'category_qty',   label: __( 'Category Quantity', 'boostcart' ) },
+	{ value: 'category_spend', label: __( 'Category Spend', 'boostcart' ) },
+	{ value: 'product_spend',  label: __( 'Product Spend', 'boostcart' ) },
 ];
 
 const REWARD_OPTIONS = [
@@ -20,16 +18,14 @@ const REWARD_OPTIONS = [
 	{ value: 'fixed_discount',      label: __( 'Fixed Discount', 'boostcart' ) },
 	{ value: 'free_shipping',       label: __( 'Free Shipping', 'boostcart' ) },
 	{ value: 'free_product',        label: __( 'Free Product', 'boostcart' ) },
-	{ value: 'store_credit',        label: __( 'Store Credit', 'boostcart' ) },
 	{ value: 'coupon_unlock',       label: __( 'Unlock Coupon', 'boostcart' ) },
-	{ value: 'custom',              label: __( 'Custom Reward', 'boostcart' ) },
 ];
 
 // Which trigger types need a product picker vs category picker
 const NEEDS_PRODUCT_PICKER   = [ 'product_qty', 'product_spend' ];
 const NEEDS_CATEGORY_PICKER  = [ 'category_qty', 'category_spend' ];
-const CURRENCY_TRIGGERS      = [ 'cart_value', 'category_spend', 'product_spend', 'lifetime_spend' ];
-const COUNT_TRIGGERS         = [ 'product_qty', 'category_qty', 'lifetime_orders' ];
+const CURRENCY_TRIGGERS      = [ 'cart_value', 'category_spend', 'product_spend' ];
+const COUNT_TRIGGERS         = [ 'product_qty', 'category_qty' ];
 
 function thresholdConfig( triggerType ) {
 	if ( CURRENCY_TRIGGERS.includes( triggerType ) ) {
@@ -37,13 +33,6 @@ function thresholdConfig( triggerType ) {
 			label: __( 'Minimum Amount', 'boostcart' ),
 			hint:  __( 'Enter amount in your store currency (e.g. 500).', 'boostcart' ),
 			step:  '0.01',
-		};
-	}
-	if ( triggerType === 'lifetime_orders' ) {
-		return {
-			label: __( 'Minimum Orders', 'boostcart' ),
-			hint:  __( 'Number of completed orders the customer must have placed.', 'boostcart' ),
-			step:  '1',
 		};
 	}
 	// product_qty, category_qty
@@ -56,13 +45,11 @@ function thresholdConfig( triggerType ) {
 
 function triggerHint( triggerType ) {
 	const hints = {
-		cart_value:      __( 'Milestone unlocks when the cart subtotal reaches this amount.', 'boostcart' ),
-		product_qty:     __( 'Counts items from the selected products in the cart.', 'boostcart' ),
-		category_qty:    __( 'Counts items from the selected categories in the cart.', 'boostcart' ),
-		category_spend:  __( 'Total cart spend on items from the selected categories.', 'boostcart' ),
-		product_spend:   __( 'Total cart spend on the selected products.', 'boostcart' ),
-		lifetime_spend:  __( 'Total amount the customer has spent across all past orders. Logged-in only.', 'boostcart' ),
-		lifetime_orders: __( 'Total number of orders the customer has placed. Logged-in only.', 'boostcart' ),
+		cart_value:     __( 'Milestone unlocks when the cart subtotal reaches this amount.', 'boostcart' ),
+		product_qty:    __( 'Counts items from the selected products in the cart.', 'boostcart' ),
+		category_qty:   __( 'Counts items from the selected categories in the cart.', 'boostcart' ),
+		category_spend: __( 'Total cart spend on items from the selected categories.', 'boostcart' ),
+		product_spend:  __( 'Total cart spend on the selected products.', 'boostcart' ),
 	};
 	return hints[ triggerType ] || '';
 }
@@ -73,9 +60,7 @@ function rewardHint( rewardType ) {
 		fixed_discount:      __( 'Enter the discount amount in your store currency.', 'boostcart' ),
 		free_shipping:       __( 'No value needed. Overrides shipping to show free options only.', 'boostcart' ),
 		free_product:        __( 'Enter the WC Product ID below. The product is added at ₹0.', 'boostcart' ),
-		store_credit:        __( 'Adds a session-based credit as a negative cart fee.', 'boostcart' ),
 		coupon_unlock:       __( 'Enter the coupon code below. It must exist in WooCommerce → Coupons.', 'boostcart' ),
-		custom:              __( 'Fires the boostcart_custom_reward_apply action hook for developer use.', 'boostcart' ),
 	};
 	return hints[ rewardType ] || '';
 }
@@ -240,35 +225,48 @@ export function MilestoneBuilder( { milestones = [], onChange } ) {
 								hint={ rewardHint( ms.reward_type ) }
 								onChange={ e => update( ms._id, 'reward_type', e.target.value ) }
 							/>
-							{ ms.reward_type !== 'free_shipping' && ms.reward_type !== 'custom' && ms.reward_type !== 'free_product' && ms.reward_type !== 'coupon_unlock' && (
+							{ ( ms.reward_type === 'percentage_discount' || ms.reward_type === 'fixed_discount' ) && (
 								<Input
 									label={ ms.reward_type === 'percentage_discount' ? __( 'Discount %', 'boostcart' ) : __( 'Amount', 'boostcart' ) }
 									type="number"
 									min="0"
 									step="0.01"
 									value={ ms.reward_value }
+									error={ ms._error?.reward_value }
 									onChange={ e => update( ms._id, 'reward_value', e.target.value ) }
 								/>
 							) }
-							{ ms.reward_type === 'free_product' && (
-								<Input
-									label={ __( 'Product ID', 'boostcart' ) }
-									type="number"
-									min="1"
-									value={ ms.reward_meta?.product_id || '' }
-									hint={ __( 'Hover the product in WooCommerce → Products to find its ID in the URL.', 'boostcart' ) }
-									onChange={ e => update( ms._id, 'reward_meta', { ...ms.reward_meta, product_id: parseInt( e.target.value ) || '' } ) }
+						</div>
+
+						{ ms.reward_type === 'free_product' && (
+							<div className="cm-field" style={ { marginTop: 8 } }>
+								<label className="cm-field__label">
+									{ __( 'Free Product', 'boostcart' ) }
+									<span className="cm-field__required" aria-hidden="true"> *</span>
+								</label>
+								<p className="cm-field__hint">{ __( 'Search and select the product to add for free.', 'boostcart' ) }</p>
+								<EntityPicker
+									endpoint="products"
+									value={ ms.reward_meta?.product_id ? [ ms.reward_meta.product_id ] : [] }
+									onChange={ ids => update( ms._id, 'reward_meta', { ...ms.reward_meta, product_id: ids[0] || null } ) }
+									placeholder={ __( 'Search for a product…', 'boostcart' ) }
 								/>
-							) }
-							{ ms.reward_type === 'coupon_unlock' && (
+								{ ms._error?.product_id && (
+									<p className="cm-field__error">{ ms._error.product_id }</p>
+								) }
+							</div>
+						) }
+
+						{ ms.reward_type === 'coupon_unlock' && (
+							<div className="cm-field" style={ { marginTop: 8 } }>
 								<Input
 									label={ __( 'Coupon Code', 'boostcart' ) }
 									value={ ms.reward_meta?.coupon_code || '' }
 									hint={ __( 'Must be an existing, active coupon in WooCommerce → Coupons.', 'boostcart' ) }
 									onChange={ e => update( ms._id, 'reward_meta', { ...ms.reward_meta, coupon_code: e.target.value } ) }
 								/>
-							) }
-						</div>
+							</div>
+						) }
 
 						{/* Label + Message */}
 						<div className="cm-field-row" style={ { marginTop: 8 } }>

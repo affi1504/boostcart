@@ -113,6 +113,13 @@ export function CampaignList() {
 									<Button
 										variant="ghost"
 										size="sm"
+										onClick={ () => navigate( `/campaigns/${ campaign.id }/view` ) }
+									>
+										{ __( 'View', 'boostcart' ) }
+									</Button>
+									<Button
+										variant="ghost"
+										size="sm"
 										onClick={ () => handleToggleStatus( campaign ) }
 									>
 										{ campaign.status === 'active'

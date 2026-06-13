@@ -9,6 +9,7 @@ import { Select } from '../../components/ui/Select';
 import { Card } from '../../components/ui/Card';
 import { Spinner } from '../../components/ui/Spinner';
 import { EntityPicker } from '../../components/ui/EntityPicker';
+import { DateTimePicker } from '../../components/ui/DateTimePicker';
 import { MilestoneBuilder } from '../Builder/MilestoneBuilder';
 import { ConditionBuilder } from '../Builder/ConditionBuilder';
 
@@ -85,6 +86,41 @@ export function CampaignEditor() {
 		}
 		if ( ! campaign.milestones || campaign.milestones.length === 0 ) {
 			errs.milestones = __( 'At least one milestone is required.', 'boostcart' );
+		} else {
+			// Validate each milestone.
+			const milestoneErrors = campaign.milestones.map( ( ms, i ) => {
+				const e = {};
+				if ( ! ms.threshold_value || parseFloat( ms.threshold_value ) <= 0 ) {
+					e.threshold = __( 'Threshold must be greater than 0.', 'boostcart' );
+				}
+				if ( ( ms.trigger_type === 'product_qty' || ms.trigger_type === 'product_spend' )
+					&& ( ! ms.trigger_target_ids || ms.trigger_target_ids.length === 0 ) ) {
+					e.trigger_targets = __( 'Select at least one product.', 'boostcart' );
+				}
+				if ( ( ms.trigger_type === 'category_qty' || ms.trigger_type === 'category_spend' )
+					&& ( ! ms.trigger_target_ids || ms.trigger_target_ids.length === 0 ) ) {
+					e.trigger_targets = __( 'Select at least one category.', 'boostcart' );
+				}
+				if ( ( ms.reward_type === 'percentage_discount' || ms.reward_type === 'fixed_discount' )
+					&& ( ! ms.reward_value || parseFloat( ms.reward_value ) <= 0 ) ) {
+					e.reward_value = __( 'Reward value must be greater than 0.', 'boostcart' );
+				}
+				if ( ms.reward_type === 'percentage_discount' && parseFloat( ms.reward_value ) > 100 ) {
+					e.reward_value = __( 'Percentage cannot exceed 100.', 'boostcart' );
+				}
+				if ( ms.reward_type === 'free_product' && ! ms.reward_meta?.product_id ) {
+					e.product_id = __( 'Select a product to give for free.', 'boostcart' );
+				}
+				if ( ms.reward_type === 'coupon_unlock' && ! ms.reward_meta?.coupon_code?.trim() ) {
+					e.coupon_code = __( 'Enter a coupon code.', 'boostcart' );
+				}
+				return Object.keys( e ).length ? { index: i, ...e } : null;
+			} ).filter( Boolean );
+
+			if ( milestoneErrors.length ) {
+				const labels = milestoneErrors.map( e => `Milestone ${ e.index + 1 }: ${ Object.values( e ).filter( ( v, k ) => k !== 'index' && typeof v === 'string' ).join( ', ' ) }` );
+				errs.milestones = labels.join( ' · ' );
+			}
 		}
 
 		if ( Object.keys( errs ).length ) {
@@ -158,7 +194,7 @@ export function CampaignEditor() {
 		return <div style={ { padding: 32, textAlign: 'center' } }><Spinner /></div>;
 	}
 
-	const showDateFields = campaign.status === 'scheduled' || campaign.start_date || campaign.end_date;
+	const showDateFields = campaign.status === 'scheduled';
 
 	return (
 		<div>
@@ -209,7 +245,15 @@ export function CampaignEditor() {
 									? __( 'Campaign will activate automatically on the start date.', 'boostcart' )
 									: __( 'Campaign is saved but not shown to customers.', 'boostcart' )
 							}
-							onChange={ e => set( 'status', e.target.value ) }
+							onChange={ e => {
+								const newStatus = e.target.value;
+								// Clear dates when switching away from scheduled.
+								if ( newStatus !== 'scheduled' ) {
+									setCampaign( c => ( { ...c, status: newStatus, start_date: '', end_date: '' } ) );
+								} else {
+									set( 'status', newStatus );
+								}
+							} }
 						/>
 						<Select
 							label={ __( 'Stacking Mode', 'boostcart' ) }
@@ -224,35 +268,23 @@ export function CampaignEditor() {
 						/>
 					</div>
 
-					{ ( showDateFields || campaign.status === 'scheduled' ) && (
+					{ campaign.status === 'scheduled' && (
 						<div className="cm-field-row" style={ { marginTop: 16 } }>
-							<Input
+							<DateTimePicker
 								label={ __( 'Start Date', 'boostcart' ) }
-								type="datetime-local"
-								hint={ __( 'Campaign becomes active at this time. Leave blank to activate immediately.', 'boostcart' ) }
+								hint={ __( 'Campaign becomes active at this time. Leave blank to activate immediately on the scheduled date.', 'boostcart' ) }
 								value={ campaign.start_date || '' }
-								onChange={ e => set( 'start_date', e.target.value ) }
+								onChange={ v => set( 'start_date', v ) }
 							/>
-							<Input
+							<DateTimePicker
 								label={ __( 'End Date', 'boostcart' ) }
-								type="datetime-local"
 								hint={ __( 'Campaign expires at this time. Leave blank to run indefinitely.', 'boostcart' ) }
 								value={ campaign.end_date || '' }
-								onChange={ e => set( 'end_date', e.target.value ) }
+								onChange={ v => set( 'end_date', v ) }
 							/>
 						</div>
 					) }
 
-					{ ! showDateFields && campaign.status !== 'scheduled' && (
-						<button
-							type="button"
-							className="cm-link-btn"
-							style={ { marginTop: 12 } }
-							onClick={ () => set( 'status', 'scheduled' ) }
-						>
-							{ __( '+ Set start / end dates', 'boostcart' ) }
-						</button>
-					) }
 				</Card>
 
 				{/* ── 2. Who sees this ── */}

@@ -58,7 +58,7 @@ export function EntityPicker( { endpoint = 'products', value = [], onChange, pla
 
 	function add( id ) {
 		onChange( [ ...value, id ] );
-		setResults( prev => prev.filter( r => r.id !== id ) );
+		setResults( [] );
 		setQuery( '' );
 	}
 

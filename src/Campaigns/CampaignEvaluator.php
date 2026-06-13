@@ -82,14 +82,12 @@ class CampaignEvaluator {
 	 */
 	public function get_current_value( string $trigger_type, array $target_ids, array $context ): float {
 		return match ( $trigger_type ) {
-			'cart_value'      => (float) ( $context['cart_total'] ?? 0.0 ),
-			'product_qty'     => $this->sum_product_qty( $target_ids, $context ),
-			'category_qty'    => $this->sum_category_qty( $target_ids, $context ),
-			'category_spend'  => $this->sum_category_spend( $target_ids, $context ),
-			'product_spend'   => $this->sum_product_spend( $target_ids, $context ),
-			'lifetime_spend'  => $this->get_lifetime_spend( (int) ( $context['customer_id'] ?? 0 ) ),
-			'lifetime_orders' => (float) $this->get_lifetime_orders( (int) ( $context['customer_id'] ?? 0 ) ),
-			default           => 0.0,
+			'cart_value'     => (float) ( $context['cart_total'] ?? 0.0 ),
+			'product_qty'    => $this->sum_product_qty( $target_ids, $context ),
+			'category_qty'   => $this->sum_category_qty( $target_ids, $context ),
+			'category_spend' => $this->sum_category_spend( $target_ids, $context ),
+			'product_spend'  => $this->sum_product_spend( $target_ids, $context ),
+			default          => 0.0,
 		};
 	}
 

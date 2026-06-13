@@ -255,6 +255,43 @@
 .cm-cond-leaf .cm-field { flex: 1; min-width: 120px; }
 .cm-cond-leaf .cm-field__input, .cm-cond-leaf .cm-field__select { height: 30px; font-size: 13px; }
 
+/* ── DateTime Picker ──────────────────────────────────────────────────────── */
+.cm-datetime-picker {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	flex-wrap: wrap;
+}
+
+.cm-datetime-picker__date {
+	flex: 1;
+	min-width: 130px;
+}
+
+.cm-datetime-picker__hour,
+.cm-datetime-picker__minute {
+	width: 72px;
+	flex-shrink: 0;
+}
+
+.cm-datetime-picker__sep {
+	color: var(--cm-mute);
+	font-size: 14px;
+	flex-shrink: 0;
+}
+
+.cm-datetime-picker__clear {
+	background: none;
+	border: none;
+	cursor: pointer;
+	color: var(--cm-mute);
+	font-size: 14px;
+	padding: 0 4px;
+	line-height: 1;
+	flex-shrink: 0;
+}
+.cm-datetime-picker__clear:hover { color: var(--cm-error); }
+
 /* ── Entity Picker ────────────────────────────────────────────────────────── */
 .cm-entity-picker { position: relative; }
 
@@ -383,6 +420,80 @@
 	flex-shrink: 0;
 }
 .cm-rule-remove:hover { color: var(--cm-error); }
+
+/* ── Campaign View ────────────────────────────────────────────────────────── */
+.cm-view-milestones {
+	display: flex;
+	flex-direction: column;
+	gap: 0;
+}
+
+.cm-view-milestone {
+	display: flex;
+	gap: var(--cm-space-md);
+	padding: var(--cm-space-md) 0;
+	border-bottom: 1px solid var(--cm-hairline);
+	position: relative;
+}
+.cm-view-milestone:last-child { border-bottom: none; }
+
+.cm-view-milestone--best-value .cm-view-milestone__step {
+	border-color: #f5a623;
+	color: #a05c00;
+	background: #fff4e0;
+}
+
+.cm-view-milestone__step {
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	border: 2px solid var(--cm-hairline);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--cm-body);
+	flex-shrink: 0;
+	margin-top: 2px;
+}
+
+.cm-view-milestone__body { flex: 1; }
+
+.cm-view-milestone__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	margin-bottom: 4px;
+}
+
+.cm-view-milestone__label {
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--cm-ink);
+}
+
+.cm-view-milestone__reward {
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--cm-link);
+	white-space: nowrap;
+}
+
+.cm-view-milestone__meta {
+	display: flex;
+	gap: var(--cm-space-md);
+	font-size: 12px;
+	color: var(--cm-mute);
+	flex-wrap: wrap;
+}
+
+.cm-view-milestone__message {
+	margin-top: 4px;
+	font-size: 12px;
+	color: var(--cm-body);
+}
 
 /* ── Link button ──────────────────────────────────────────────────────────── */
 .cm-link-btn {

@@ -5,6 +5,7 @@ import { getSettings, updateSettings } from '../../api/client';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Spinner } from '../../components/ui/Spinner';
+import { ProgressPreview, PROGRESS_STYLES } from '../../components/ui/ProgressPreview';
 
 const LOCATION_OPTIONS = [
 	{ key: 'cart',            label: __( 'Cart Page', 'boostcart' ) },
@@ -179,6 +180,122 @@ function DebugTab() {
 	);
 }
 
+
+const DEFAULT_COLORS = {
+	bar:    '#171717',
+	track:  '#f0f0f0',
+	accent: '#0070f3',
+	text:   '#4d4d4d',
+};
+
+function ProgressBarSettings( { settings, setSettings, onSave, saving, saved } ) {
+	const style   = settings.progress_style  || 'classic';
+	const colors  = { ...DEFAULT_COLORS, ...( settings.progress_colors || {} ) };
+	const animated = settings.progress_animated !== false;
+
+	function setStyle( id ) {
+		setSettings( s => ( { ...s, progress_style: id } ) );
+	}
+
+	function setColor( key, value ) {
+		setSettings( s => ( { ...s, progress_colors: { ...( s.progress_colors || {} ), [ key ]: value } } ) );
+	}
+
+	function setAnimated( v ) {
+		setSettings( s => ( { ...s, progress_animated: v } ) );
+	}
+
+	return (
+		<div>
+			<div className="cm-page-header" style={ { marginBottom: 16 } }>
+				<div>
+					<h2 className="cm-section-title" style={ { marginBottom: 4 } }>Progress Bar Style</h2>
+					<p className="cm-section-hint" style={ { margin: 0 } }>
+						Choose how the progress bar looks on your store and customise its colours.
+					</p>
+				</div>
+				<Button loading={ saving } onClick={ onSave }>
+					{ saved ? 'Saved!' : 'Save Settings' }
+				</Button>
+			</div>
+
+			{/* Live preview */}
+			<Card style={ { marginBottom: 20 } }>
+				<h3 className="cm-section-title" style={ { marginBottom: 12 } }>Live Preview</h3>
+				<ProgressPreview style={ style } colors={ colors } animated={ animated } />
+			</Card>
+
+			{/* Style selector */}
+			<Card style={ { marginBottom: 16 } }>
+				<h3 className="cm-section-title" style={ { marginBottom: 4 } }>Style</h3>
+				<p className="cm-section-hint">Select the visual layout for the progress bar.</p>
+				<div className="cm-style-grid">
+					{ PROGRESS_STYLES.map( s => (
+						<div
+							key={ s.id }
+							className={ `cm-style-card${ style === s.id ? ' --active' : '' }` }
+							onClick={ () => setStyle( s.id ) }
+							role="button"
+							tabIndex={ 0 }
+							onKeyDown={ e => e.key === 'Enter' && setStyle( s.id ) }
+						>
+							<div className="cm-style-card__name">{ s.label }</div>
+							<div className="cm-style-card__desc">{ s.description }</div>
+						</div>
+					) ) }
+				</div>
+			</Card>
+
+			{/* Colour controls */}
+			<Card style={ { marginBottom: 16 } }>
+				<h3 className="cm-section-title" style={ { marginBottom: 4 } }>Colours</h3>
+				<p className="cm-section-hint">All changes reflect instantly in the preview above.</p>
+				<div className="cm-color-row">
+					{ [
+						[ 'bar',    'Bar / Fill'   ],
+						[ 'track',  'Track / Background' ],
+						[ 'accent', 'Accent / Next Milestone' ],
+						[ 'text',   'Message Text' ],
+					].map( ( [ key, label ] ) => (
+						<div key={ key } className="cm-color-field">
+							<label>{ label }</label>
+							<input
+								type="color"
+								value={ colors[ key ] }
+								onChange={ e => setColor( key, e.target.value ) }
+							/>
+							<code style={ { fontSize: 10, color: 'var(--cm-mute)' } }>{ colors[ key ] }</code>
+						</div>
+					) ) }
+				</div>
+				<button
+					type="button"
+					className="cm-link-btn"
+					onClick={ () => setSettings( s => ( { ...s, progress_colors: DEFAULT_COLORS } ) ) }
+				>
+					Reset to defaults
+				</button>
+			</Card>
+
+			{/* Animations toggle */}
+			<Card>
+				<h3 className="cm-section-title" style={ { marginBottom: 4 } }>Animations</h3>
+				<label className="cm-checkbox-row">
+					<input
+						type="checkbox"
+						checked={ animated }
+						onChange={ e => setAnimated( e.target.checked ) }
+					/>
+					Enable bar fill animations and milestone effects
+				</label>
+				<p className="cm-section-hint" style={ { marginTop: 4 } }>
+					Disable for accessibility or performance on low-end devices.
+				</p>
+			</Card>
+		</div>
+	);
+}
+
 export function SettingsPage() {
 	const [ settings, setSettings ] = useState( null );
 	const [ saving, setSaving ]     = useState( false );
@@ -227,7 +344,11 @@ export function SettingsPage() {
 
 			{/* Tab bar */ }
 			<div className="cm-tab-bar" style={ { marginBottom: 24 } }>
-				{ [ [ 'general', __( 'General', 'boostcart' ) ], [ 'debug', __( 'Debug', 'boostcart' ) ] ].map( ( [ key, label ] ) => (
+				{ [
+					[ 'general',  __( 'General', 'boostcart' ) ],
+					[ 'progress', __( 'Progress Bar', 'boostcart' ) ],
+					[ 'debug',    __( 'Debug', 'boostcart' ) ],
+				].map( ( [ key, label ] ) => (
 					<button
 						key={ key }
 						className={ `cm-tab-btn${ tab === key ? ' cm-tab-btn--active' : '' }` }
@@ -287,6 +408,16 @@ export function SettingsPage() {
 				</>
 			) }
 
+
+			{ tab === 'progress' && (
+				<ProgressBarSettings
+					settings={ settings }
+					setSettings={ setSettings }
+					onSave={ handleSave }
+					saving={ saving }
+					saved={ saved }
+				/>
+			) }
 			{ tab === 'debug' && <DebugTab /> }
 		</div>
 	);

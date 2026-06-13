@@ -6,13 +6,11 @@ import { Input } from '../../components/ui/Input';
 import { EntityPicker } from '../../components/ui/EntityPicker';
 
 const CONDITION_TYPES = [
-	{ value: 'cart_value',      label: __( 'Cart Value', 'boostcart' ) },
-	{ value: 'customer_role',   label: __( 'Customer Role', 'boostcart' ) },
-	{ value: 'product_qty',     label: __( 'Product Quantity', 'boostcart' ) },
-	{ value: 'category_qty',    label: __( 'Category Quantity', 'boostcart' ) },
-	{ value: 'lifetime_spend',  label: __( 'Lifetime Spend', 'boostcart' ) },
-	{ value: 'lifetime_orders', label: __( 'Lifetime Orders', 'boostcart' ) },
-	{ value: 'date_range',      label: __( 'Date Range', 'boostcart' ) },
+	{ value: 'cart_value',     label: __( 'Cart Value', 'boostcart' ) },
+	{ value: 'customer_role',  label: __( 'Customer Role', 'boostcart' ) },
+	{ value: 'product_qty',    label: __( 'Product Quantity', 'boostcart' ) },
+	{ value: 'category_qty',   label: __( 'Category Quantity', 'boostcart' ) },
+	{ value: 'date_range',     label: __( 'Date Range', 'boostcart' ) },
 ];
 
 const COMPARATORS = [

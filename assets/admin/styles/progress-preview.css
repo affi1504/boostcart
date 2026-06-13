@@ -1,0 +1,335 @@
+/* ── Progress Preview Frame ───────────────────────────────────────────────── */
+.cm-progress-preview-frame {
+	background: var(--cm-canvas-soft);
+	border: 1px solid var(--cm-hairline);
+	border-radius: var(--cm-radius-lg);
+	overflow: hidden;
+}
+
+.cm-progress-preview-label {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 8px 16px;
+	background: var(--cm-canvas-soft-2);
+	border-bottom: 1px solid var(--cm-hairline);
+	font-size: 12px;
+	color: var(--cm-body);
+	font-family: var(--cm-font-mono);
+}
+
+.cm-progress-preview-body {
+	padding: 24px 20px;
+}
+
+/* ── Shared preview utilities ─────────────────────────────────────────────── */
+.cm-prev__msg {
+	font-size: 13px;
+	margin: 0 0 10px;
+}
+
+/* ── Style 1: Classic Dots ────────────────────────────────────────────────── */
+.cm-prev.classic-dots .cm-prev__track-wrap {
+	position: relative;
+	padding-bottom: 28px;
+}
+.cm-prev.classic-dots .cm-prev__track {
+	position: relative;
+	height: 6px;
+	border-radius: 100px;
+	overflow: visible;
+}
+.cm-prev.classic-dots .cm-prev__fill {
+	height: 100%;
+	border-radius: 100px;
+	transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.cm-prev.classic-dots .cm-prev__fill--anim {
+	transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.cm-prev.classic-dots .cm-prev__dot {
+	position: absolute;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	border: 2px solid;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 9px;
+	transition: all 0.4s;
+}
+.cm-prev.classic-dots .cm-prev__dot.--next {
+	animation: cm-pulse 1.8s ease-in-out infinite;
+}
+.cm-prev.classic-dots .cm-prev__dot-check { font-size: 9px; color: #fff; }
+.cm-prev.classic-dots .cm-prev__star { font-size: 8px; position: absolute; top: -12px; }
+
+.cm-prev.classic-dots .cm-prev__labels {
+	position: relative;
+	height: 24px;
+	margin-top: 6px;
+}
+.cm-prev.classic-dots .cm-prev__label {
+	position: absolute;
+	transform: translateX(-50%);
+	font-size: 11px;
+	text-align: center;
+	white-space: nowrap;
+}
+
+@keyframes cm-pulse {
+	0%, 100% { box-shadow: 0 0 0 0 currentColor; }
+	50%       { box-shadow: 0 0 0 5px transparent; }
+}
+
+/* ── Style 2: Gradient Flow ───────────────────────────────────────────────── */
+.cm-prev.gradient-flow .cm-prev__gflow-wrap {
+	position: relative;
+	padding-bottom: 36px;
+}
+.cm-prev.gradient-flow .cm-prev__gflow-track {
+	position: relative;
+	height: 10px;
+	border-radius: 100px;
+	overflow: hidden;
+}
+.cm-prev.gradient-flow .cm-prev__gflow-fill {
+	height: 100%;
+	border-radius: 100px;
+	transition: width 1s ease;
+	position: relative;
+}
+.cm-prev.gradient-flow .cm-prev__gflow-fill.--anim {
+	background-size: 200% 100%;
+	animation: cm-gflow 2s linear infinite;
+}
+@keyframes cm-gflow {
+	0%   { background-position: 0% 50%;   }
+	100% { background-position: 200% 50%; }
+}
+.cm-prev.gradient-flow .cm-prev__gflow-tick {
+	position: absolute;
+	top: 0; bottom: 0;
+	width: 2px;
+	transform: translateX(-50%);
+}
+.cm-prev.gradient-flow .cm-prev__gflow-labels {
+	position: relative;
+	height: 32px;
+	margin-top: 6px;
+}
+.cm-prev.gradient-flow .cm-prev__gflow-lbl {
+	position: absolute;
+	transform: translateX(-50%);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	font-size: 11px;
+	white-space: nowrap;
+}
+
+/* ── Style 3: Segment Tiles ───────────────────────────────────────────────── */
+.cm-prev.segment-tiles .cm-prev__tiles {
+	display: flex;
+	gap: 4px;
+}
+.cm-prev.segment-tiles .cm-prev__tile {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+.cm-prev.segment-tiles .cm-prev__tile-track {
+	height: 8px;
+	border-radius: 4px;
+	overflow: hidden;
+	position: relative;
+}
+.cm-prev.segment-tiles .cm-prev__tile-fill {
+	height: 100%;
+	border-radius: 4px;
+	transition: width 0.8s ease;
+}
+.cm-prev.segment-tiles .cm-prev__tile-fill.--anim {
+	position: relative;
+	overflow: hidden;
+}
+.cm-prev.segment-tiles .cm-prev__tile-fill.--anim::after {
+	content: '';
+	position: absolute;
+	top: 0; left: -100%; right: 0; bottom: 0;
+	background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+	animation: cm-shimmer 1.8s ease infinite;
+}
+@keyframes cm-shimmer {
+	0%   { left: -100%; }
+	100% { left: 200%;  }
+}
+.cm-prev.segment-tiles .cm-prev__tile--best .cm-prev__tile-label {
+	font-weight: 700;
+}
+.cm-prev.segment-tiles .cm-prev__tile-label {
+	font-size: 12px;
+	text-align: center;
+}
+.cm-prev.segment-tiles .cm-prev__tile-threshold {
+	font-size: 10px;
+	text-align: center;
+	font-family: var(--cm-font-mono);
+}
+
+/* ── Style 4: Bold Steps ──────────────────────────────────────────────────── */
+.cm-prev.bold-steps {
+	padding-top: 8px;
+}
+.cm-prev.bold-steps .cm-prev__bold-badges {
+	position: relative;
+	height: 36px;
+	margin-bottom: 4px;
+}
+.cm-prev.bold-steps .cm-prev__bold-badge-wrap {
+	position: absolute;
+	transform: translateX(-50%);
+}
+.cm-prev.bold-steps .cm-prev__bold-badge {
+	font-size: 11px;
+	font-weight: 600;
+	padding: 3px 8px;
+	border-radius: 100px;
+	border: 1.5px solid;
+	white-space: nowrap;
+	transition: all 0.3s;
+}
+.cm-prev.bold-steps .cm-prev__bold-badge.--next {
+	animation: cm-bounce 1.5s ease-in-out infinite;
+}
+@keyframes cm-bounce {
+	0%, 100% { transform: translateY(0); }
+	50%       { transform: translateY(-3px); }
+}
+.cm-prev.bold-steps .cm-prev__bold-bar-wrap { position: relative; }
+.cm-prev.bold-steps .cm-prev__bold-track {
+	height: 14px;
+	border-radius: 100px;
+	position: relative;
+	overflow: hidden;
+}
+.cm-prev.bold-steps .cm-prev__bold-fill {
+	height: 100%;
+	border-radius: 100px;
+	transition: width 1s ease;
+}
+.cm-prev.bold-steps .cm-prev__bold-fill.--anim {
+	position: relative;
+	overflow: hidden;
+}
+.cm-prev.bold-steps .cm-prev__bold-fill.--anim::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(90deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%);
+	animation: cm-shimmer 1.5s ease infinite;
+}
+.cm-prev.bold-steps .cm-prev__bold-marker {
+	position: absolute;
+	top: 3px; bottom: 3px;
+	width: 2px;
+	transform: translateX(-50%);
+	border-radius: 1px;
+}
+.cm-prev.bold-steps .cm-prev__bold-ends {
+	display: flex;
+	justify-content: space-between;
+	margin-top: 5px;
+}
+
+/* ── Style 5: Minimal Strip ───────────────────────────────────────────────── */
+.cm-prev.minimal-strip .cm-prev__strip-row {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+.cm-prev.minimal-strip .cm-prev__strip-val {
+	font-size: 13px;
+	white-space: nowrap;
+	flex-shrink: 0;
+}
+.cm-prev.minimal-strip .cm-prev__strip-track {
+	flex: 1;
+	height: 4px;
+	border-radius: 100px;
+	overflow: hidden;
+}
+.cm-prev.minimal-strip .cm-prev__strip-fill {
+	height: 100%;
+	border-radius: 100px;
+	transition: width 0.8s ease;
+}
+.cm-prev.minimal-strip .cm-prev__strip-next {
+	font-size: 12px;
+	font-weight: 600;
+	white-space: nowrap;
+	flex-shrink: 0;
+}
+.cm-prev.minimal-strip .cm-prev__strip-msg {
+	font-size: 12px;
+	margin: 6px 0 0;
+	opacity: 0.75;
+}
+
+/* ── Style selector card grid ─────────────────────────────────────────────── */
+.cm-style-grid {
+	display: grid;
+	grid-template-columns: repeat( auto-fill, minmax( 160px, 1fr ) );
+	gap: 10px;
+	margin-bottom: 20px;
+}
+.cm-style-card {
+	border: 2px solid var(--cm-hairline);
+	border-radius: var(--cm-radius-md);
+	padding: 12px;
+	cursor: pointer;
+	transition: border-color 0.15s, box-shadow 0.15s;
+	background: var(--cm-canvas);
+}
+.cm-style-card:hover { border-color: var(--cm-hairline-strong); }
+.cm-style-card.--active {
+	border-color: var(--cm-ink);
+	box-shadow: 0 0 0 1px var(--cm-ink);
+}
+.cm-style-card__name {
+	font-size: 13px;
+	font-weight: 600;
+	margin-bottom: 3px;
+}
+.cm-style-card__desc {
+	font-size: 11px;
+	color: var(--cm-mute);
+	line-height: 1.4;
+}
+
+/* ── Color swatches ───────────────────────────────────────────────────────── */
+.cm-color-row {
+	display: flex;
+	gap: 12px;
+	flex-wrap: wrap;
+	margin-bottom: 16px;
+}
+.cm-color-field {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	font-size: 12px;
+	color: var(--cm-body);
+}
+.cm-color-field input[type="color"] {
+	width: 40px;
+	height: 32px;
+	border: 1px solid var(--cm-hairline);
+	border-radius: var(--cm-radius-sm);
+	padding: 2px;
+	cursor: pointer;
+	background: var(--cm-canvas);
+}

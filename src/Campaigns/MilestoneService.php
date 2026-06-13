@@ -13,11 +13,19 @@ class MilestoneService {
 	public function create( int $campaign_id, array $data ): array {
 		$data = $this->sanitize( $data );
 		if ( ! isset( $data['sort_order'] ) ) {
-			$existing         = $this->repository->find_by_campaign( $campaign_id );
+			$existing           = $this->repository->find_by_campaign( $campaign_id );
 			$data['sort_order'] = count( $existing );
 		}
 		$id = $this->repository->create( $campaign_id, $data );
-		return $this->repository->find( $id );
+		if ( ! $id ) {
+			global $wpdb;
+			throw new \RuntimeException( 'Milestone insert failed: ' . ( $wpdb->last_error ?: 'unknown DB error' ) );
+		}
+		$row = $this->repository->find( $id );
+		if ( null === $row ) {
+			throw new \RuntimeException( "Milestone inserted (id=$id) but could not be retrieved." );
+		}
+		return $row;
 	}
 
 	public function update( int $id, array $data ): ?array {
@@ -35,13 +43,15 @@ class MilestoneService {
 	}
 
 	private function sanitize( array $data ): array {
+		// Strip React internal fields and evaluation-time fields that must never reach the DB.
+		unset( $data['_id'], $data['earned'], $data['current_value'] );
+
 		$allowed_triggers = [
-			'cart_value', 'product_qty', 'category_qty', 'category_spend',
-			'product_spend', 'lifetime_spend', 'lifetime_orders',
+			'cart_value', 'product_qty', 'category_qty', 'category_spend', 'product_spend',
 		];
 		$allowed_rewards = [
 			'percentage_discount', 'fixed_discount', 'free_shipping',
-			'free_product', 'store_credit', 'coupon_unlock', 'custom',
+			'free_product', 'coupon_unlock',
 		];
 		$allowed_comparators = [ '>=', '<=', '>', '<', '=', '!=' ];
 

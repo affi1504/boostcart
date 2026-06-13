@@ -10,8 +10,6 @@ use CartMilestones\Conditions\Types\CategoryQtyCondition;
 use CartMilestones\Conditions\Types\CategorySpendCondition;
 use CartMilestones\Conditions\Types\CustomerRoleCondition;
 use CartMilestones\Conditions\Types\DateRangeCondition;
-use CartMilestones\Conditions\Types\LifetimeOrdersCondition;
-use CartMilestones\Conditions\Types\LifetimeSpendCondition;
 use CartMilestones\Conditions\Types\ProductQtyCondition;
 use CartMilestones\Conditions\Types\ProductSpendCondition;
 
@@ -22,15 +20,13 @@ class ConditionEvaluator {
 
 	public function __construct() {
 		$this->handlers = [
-			'cart_value'      => new CartValueCondition(),
-			'product_qty'     => new ProductQtyCondition(),
-			'category_qty'    => new CategoryQtyCondition(),
-			'category_spend'  => new CategorySpendCondition(),
-			'product_spend'   => new ProductSpendCondition(),
-			'lifetime_spend'  => new LifetimeSpendCondition(),
-			'lifetime_orders' => new LifetimeOrdersCondition(),
-			'customer_role'   => new CustomerRoleCondition(),
-			'date_range'      => new DateRangeCondition(),
+			'cart_value'     => new CartValueCondition(),
+			'product_qty'    => new ProductQtyCondition(),
+			'category_qty'   => new CategoryQtyCondition(),
+			'category_spend' => new CategorySpendCondition(),
+			'product_spend'  => new ProductSpendCondition(),
+			'customer_role'  => new CustomerRoleCondition(),
+			'date_range'     => new DateRangeCondition(),
 		];
 	}
 
