@@ -40,12 +40,10 @@ function scheduleFetch( delay = 300 ) {
 // ── Classic WooCommerce AJAX cart events ──────────────────────────────────
 if ( typeof jQuery !== 'undefined' ) {
 	jQuery( document ).on(
-		'updated_cart_totals'       + ' ' +  // Cart page totals recalculated
-		'wc_fragments_refreshed'    + ' ' +  // Cart fragments reloaded
+		'wc_fragments_refreshed'    + ' ' +  // Cart fragments reloaded after AJAX
 		'wc-cart-fragments-loaded'  + ' ' +  // Fragments loaded on page load
 		'added_to_cart'             + ' ' +  // Product added via AJAX
 		'removed_from_cart'         + ' ' +  // Product removed via AJAX
-		'updated_checkout'          + ' ' +  // Checkout page updated
 		'cart_page_refreshed'       + ' ' +  // WooCommerce Blocks cart page refresh
 		'woocommerce_cart_updated',           // Any cart change
 		() => scheduleFetch()

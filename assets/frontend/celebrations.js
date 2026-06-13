@@ -4,6 +4,7 @@
  * Deduplication: uses sessionStorage + a flag set by the PHP layer via
  * the cm:progress-updated event's `celebrations` key.
  */
+import './styles/celebrations.css';
 
 const STORAGE_KEY = 'cm_celebrated';
 

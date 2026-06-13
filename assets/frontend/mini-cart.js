@@ -1,6 +1,7 @@
 /**
  * Boostcart — Mini Cart Widget
  */
+import './styles/mini-cart.css';
 
 const MINI_CART_SELECTOR = '[data-cm-widget="mini-cart"]';
 

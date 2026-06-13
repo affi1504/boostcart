@@ -1,17 +1,26 @@
 /**
  * Boostcart — Progress Bars (horizontal + vertical)
  */
+import './styles/progress.css';
 
 const HORIZONTAL_SELECTOR = '[data-cm-widget="horizontal"]';
 const VERTICAL_SELECTOR   = '[data-cm-widget="vertical"]';
 
 function formatCurrency( amount ) {
-	// Use WooCommerce price format if available.
-	return new Intl.NumberFormat( document.documentElement.lang || 'en', {
-		style: 'currency',
-		currency: window.cmFrontendData?.currency?.code || 'USD',
-		minimumFractionDigits: 2,
-	} ).format( amount );
+	const data = window.cmFrontendData?.currency || {};
+	const symbol = data.symbol || '₹';
+	const decimals = parseInt( data.decimals ?? 2, 10 );
+	const sep = data.separator || '.';
+	const thou = data.thousand || ',';
+	const num = Number( amount ).toFixed( decimals )
+		.replace( '.', '@@DEC@@' )
+		.replace( /\B(?=(\d{3})+(?!\d))/g, thou )
+		.replace( '@@DEC@@', sep );
+	const pos = data.position || 'left';
+	if ( pos === 'left' || pos === 'left_space' ) {
+		return `${ symbol }${ pos === 'left_space' ? ' ' : '' }${ num }`;
+	}
+	return `${ num }${ pos === 'right_space' ? ' ' : '' }${ symbol }`;
 }
 
 function renderHorizontal( el, campaigns ) {
