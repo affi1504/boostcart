@@ -8,7 +8,7 @@ use CartMilestones\Update\Contracts\UpdateProviderInterface;
 
 class GitHubUpdateProvider implements UpdateProviderInterface {
 
-	private const CACHE_TTL = 6 * HOUR_IN_SECONDS;
+	private const CACHE_TTL = 30 * MINUTE_IN_SECONDS;
 
 	public function __construct( private readonly string $repo ) {}
 

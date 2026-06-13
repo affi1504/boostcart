@@ -52,11 +52,26 @@ class UpdateManager {
 			'cm_check_for_updates',
 			[ $this, 'flush_update_cache' ]
 		);
+		// Clear caches every time the Plugins page loads so the update
+		// banner appears as soon as a new GitHub release exists.
+		$loader->add_action(
+			'load-plugins.php',
+			[ $this, 'force_update_check' ]
+		);
 
 		// Schedule a daily cache flush so update notices stay fresh.
 		if ( ! wp_next_scheduled( 'cm_check_for_updates' ) ) {
 			wp_schedule_event( time(), 'daily', 'cm_check_for_updates' );
 		}
+	}
+
+	/**
+	 * Called when the Plugins admin page loads.
+	 * Clears our GitHub transients and WordPress's own update transient so
+	 * the update banner appears immediately when a new release is available.
+	 */
+	public function force_update_check(): void {
+		$this->flush_update_cache();
 	}
 
 	/**

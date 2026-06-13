@@ -62,6 +62,14 @@ class Plugin {
 		$assets = $this->container->make( Assets::class );
 		$this->loader->add_action( 'admin_menu', [ $admin, 'register_menu' ] );
 		$this->loader->add_action( 'admin_enqueue_scripts', [ $assets, 'enqueue_admin_scripts' ] );
+
+		// "Check for Updates" link on the Plugins page.
+		$this->loader->add_filter(
+			'plugin_action_links_' . CM_PLUGIN_BASENAME,
+			[ $admin, 'add_action_links' ]
+		);
+		$this->loader->add_action( 'admin_post_boostcart_check_for_updates', [ $admin, 'handle_check_for_updates' ] );
+		$this->loader->add_action( 'admin_notices', [ $admin, 'show_update_check_notice' ] );
 	}
 
 	private function define_frontend_hooks(): void {
