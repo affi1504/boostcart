@@ -14,18 +14,19 @@ class Activator {
 	}
 
 	/**
-	 * Run on every plugin load to apply schema migrations for existing installs.
-	 * Safe to call repeatedly — only alters if the column is missing.
+	 * Run on every plugin load to apply schema migrations.
+	 * Column checks are always run regardless of version — they're idempotent.
 	 */
 	public static function maybe_migrate(): void {
+		// Always attempt column additions — safe because we check existence first.
+		self::alter_milestones_table();
+
 		$db_version = get_option( 'cm_db_version', '0' );
-		if ( version_compare( $db_version, '2.0', '>=' ) ) {
-			return;
+		if ( version_compare( $db_version, '2.0', '<' ) ) {
+			self::create_tables();
+			self::migrate_trigger_type_to_milestones();
+			update_option( 'cm_db_version', '2.0' );
 		}
-		self::create_tables();
-		self::alter_milestones_table(); // dbDelta doesn't reliably ADD columns — use ALTER TABLE.
-		self::migrate_trigger_type_to_milestones();
-		update_option( 'cm_db_version', '2.0' );
 	}
 
 	/**
