@@ -14,53 +14,54 @@ const DEFAULT_STATE = {
 };
 
 const actions = {
-	setCampaigns: ( campaigns ) => ( { type: 'SET_CAMPAIGNS', campaigns } ),
-	setCampaignsLoading: ( loading ) => ( { type: 'SET_CAMPAIGNS_LOADING', loading } ),
-	setCurrentCampaign: ( campaign ) => ( { type: 'SET_CURRENT_CAMPAIGN', campaign } ),
-	setAnalytics: ( analytics ) => ( { type: 'SET_ANALYTICS', analytics } ),
-	setAnalyticsLoading: ( loading ) => ( { type: 'SET_ANALYTICS_LOADING', loading } ),
-	setSettings: ( settings ) => ( { type: 'SET_SETTINGS', settings } ),
-	setError: ( error ) => ( { type: 'SET_ERROR', error } ),
+	setCampaigns:        ( campaigns )  => ( { type: 'SET_CAMPAIGNS', campaigns } ),
+	setCampaignsLoading: ( loading )    => ( { type: 'SET_CAMPAIGNS_LOADING', loading } ),
+	setCurrentCampaign:  ( campaign )   => ( { type: 'SET_CURRENT_CAMPAIGN', campaign } ),
+	setAnalytics:        ( analytics )  => ( { type: 'SET_ANALYTICS', analytics } ),
+	setAnalyticsLoading: ( loading )    => ( { type: 'SET_ANALYTICS_LOADING', loading } ),
+	setSettings:         ( settings )   => ( { type: 'SET_SETTINGS', settings } ),
+	setError:            ( error )      => ( { type: 'SET_ERROR', error } ),
 
+	// Thunks — require the thunk middleware registered below.
 	fetchCampaigns: () => async ( { dispatch } ) => {
-		dispatch( actions.setCampaignsLoading( true ) );
+		dispatch( { type: 'SET_CAMPAIGNS_LOADING', loading: true } );
 		try {
 			const campaigns = await api.getCampaigns();
-			dispatch( actions.setCampaigns( campaigns ) );
+			dispatch( { type: 'SET_CAMPAIGNS', campaigns } );
 		} catch ( err ) {
-			dispatch( actions.setError( err.message ) );
+			dispatch( { type: 'SET_ERROR', error: err.message } );
 		} finally {
-			dispatch( actions.setCampaignsLoading( false ) );
+			dispatch( { type: 'SET_CAMPAIGNS_LOADING', loading: false } );
 		}
 	},
 
 	fetchCampaign: ( id ) => async ( { dispatch } ) => {
 		try {
 			const campaign = await api.getCampaign( id );
-			dispatch( actions.setCurrentCampaign( campaign ) );
+			dispatch( { type: 'SET_CURRENT_CAMPAIGN', campaign } );
 		} catch ( err ) {
-			dispatch( actions.setError( err.message ) );
+			dispatch( { type: 'SET_ERROR', error: err.message } );
 		}
 	},
 
 	fetchAnalytics: ( params ) => async ( { dispatch } ) => {
-		dispatch( actions.setAnalyticsLoading( true ) );
+		dispatch( { type: 'SET_ANALYTICS_LOADING', loading: true } );
 		try {
 			const analytics = await api.getAnalyticsSummary( params );
-			dispatch( actions.setAnalytics( analytics ) );
+			dispatch( { type: 'SET_ANALYTICS', analytics } );
 		} catch ( err ) {
-			dispatch( actions.setError( err.message ) );
+			dispatch( { type: 'SET_ERROR', error: err.message } );
 		} finally {
-			dispatch( actions.setAnalyticsLoading( false ) );
+			dispatch( { type: 'SET_ANALYTICS_LOADING', loading: false } );
 		}
 	},
 
 	fetchSettings: () => async ( { dispatch } ) => {
 		try {
 			const settings = await api.getSettings();
-			dispatch( actions.setSettings( settings ) );
+			dispatch( { type: 'SET_SETTINGS', settings } );
 		} catch ( err ) {
-			dispatch( actions.setError( err.message ) );
+			dispatch( { type: 'SET_ERROR', error: err.message } );
 		}
 	},
 };
@@ -88,7 +89,14 @@ const selectors = {
 	getError:            ( state ) => state.error,
 };
 
-const store = createReduxStore( STORE_NAME, { reducer, actions, selectors } );
+// Register with thunk middleware so async action creators work.
+const store = createReduxStore( STORE_NAME, {
+	reducer,
+	actions,
+	selectors,
+	controls: {},
+} );
+
 register( store );
 
 export { STORE_NAME };

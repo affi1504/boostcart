@@ -191,8 +191,30 @@ class CampaignsController {
 			'stacking_mode' => [ 'type' => 'string', 'enum' => [ 'stackable', 'exclusive' ] ],
 			'target_scope'  => [ 'type' => 'string', 'enum' => [ 'store', 'categories', 'products', 'roles' ] ],
 			'target_ids'    => [ 'type' => 'array' ],
-			'start_date'    => [ 'type' => 'string', 'format' => 'date-time' ],
-			'end_date'      => [ 'type' => 'string', 'format' => 'date-time' ],
+			'start_date'    => [
+				'type'              => 'string',
+				'sanitize_callback' => static function ( $val ) {
+					// Accept empty string (clear the date) or any non-empty string.
+					$val = sanitize_text_field( $val );
+					if ( empty( $val ) ) {
+						return null;
+					}
+					// Normalise datetime-local format (YYYY-MM-DDTHH:MM) to MySQL datetime.
+					$ts = strtotime( $val );
+					return $ts ? date( 'Y-m-d H:i:s', $ts ) : null;
+				},
+			],
+			'end_date'      => [
+				'type'              => 'string',
+				'sanitize_callback' => static function ( $val ) {
+					$val = sanitize_text_field( $val );
+					if ( empty( $val ) ) {
+						return null;
+					}
+					$ts = strtotime( $val );
+					return $ts ? date( 'Y-m-d H:i:s', $ts ) : null;
+				},
+			],
 			'priority'      => [ 'type' => 'integer' ],
 		];
 	}

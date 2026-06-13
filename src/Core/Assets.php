@@ -30,23 +30,33 @@ class Assets {
 			$asset['version']
 		);
 
+		// Determine which SPA route to open based on the WP submenu slug.
+		$page       = sanitize_key( $_GET['page'] ?? 'boostcart' ); // phpcs:ignore WordPress.Security.NonceVerification
+		$initial_route = match ( $page ) {
+			'boostcart-analytics' => '/analytics',
+			'boostcart-settings'  => '/settings',
+			default               => '/campaigns',
+		};
+
 		wp_localize_script(
 			'cm-admin',
 			'cmAdminData',
 			[
-				'restUrl'     => esc_url_raw( rest_url( 'boostcart/v1/' ) ),
-				'restRootUrl' => esc_url_raw( rest_url() ),
-				'nonce'       => wp_create_nonce( 'wp_rest' ),
-				'version'   => CM_VERSION,
-				'currency'  => [
+				'restUrl'      => esc_url_raw( rest_url( 'boostcart/v1/' ) ),
+				'restRootUrl'  => esc_url_raw( rest_url() ),
+				'nonce'        => wp_create_nonce( 'wp_rest' ),
+				'version'      => CM_VERSION,
+				'initialRoute' => $initial_route,
+				'pluginBasename' => CM_PLUGIN_BASENAME,
+				'currency'     => [
 					'symbol'    => html_entity_decode( get_woocommerce_currency_symbol() ),
 					'position'  => get_option( 'woocommerce_currency_pos' ),
 					'decimals'  => wc_get_price_decimals(),
 					'separator' => wc_get_price_decimal_separator(),
 					'thousand'  => wc_get_price_thousand_separator(),
 				],
-				'siteUrl'   => get_site_url(),
-				'ajaxUrl'   => admin_url( 'admin-ajax.php' ),
+				'siteUrl'  => get_site_url(),
+				'ajaxUrl'  => admin_url( 'admin-ajax.php' ),
 			]
 		);
 	}

@@ -14,6 +14,14 @@ if ( window.cmAdminData?.restRootUrl ) {
 	apiFetch.use( apiFetch.createRootURLMiddleware( window.cmAdminData.restRootUrl ) );
 }
 
+// Navigate to the correct route based on which WP submenu was clicked.
+// Only redirect when the hash is empty or just "/".
+const initialRoute = window.cmAdminData?.initialRoute || '/campaigns';
+const currentHash  = window.location.hash.replace( '#', '' ) || '/';
+if ( currentHash === '/' || currentHash === '' ) {
+	window.location.hash = initialRoute;
+}
+
 const container = document.getElementById( 'cm-admin-root' );
 if ( container ) {
 	createRoot( container ).render(
