@@ -98,9 +98,13 @@ export function CampaignEditor() {
 			} else {
 				await updateCampaign( id, campaign );
 			}
-			navigate( '/campaigns' );
+			// Pass success message to campaign list via navigation state.
+			navigate( '/campaigns', { state: { successMessage: isNew
+				? __( 'Campaign created successfully.', 'boostcart' )
+				: __( 'Campaign updated successfully.', 'boostcart' )
+			} } );
 		} catch ( e ) {
-			setErrors( { _global: e.message } );
+			setErrors( { _global: e.message || __( 'An error occurred. Check the Debug tab in Settings for details.', 'boostcart' ) } );
 		} finally {
 			setSaving( false );
 		}

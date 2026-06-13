@@ -20,20 +20,26 @@ class Logger {
 	}
 
 	public static function log( string $level, string $message, array $context = [] ): void {
-		if ( ! self::$enabled ) {
-			return;
-		}
-
 		$entry = sprintf(
-			"[%s] [%s] %s %s\n",
+			'[%s] [%s] %s %s',
 			current_time( 'Y-m-d H:i:s' ),
 			strtoupper( $level ),
 			$message,
 			empty( $context ) ? '' : wp_json_encode( $context )
 		);
 
+		// Always write errors to PHP error_log regardless of debug mode.
+		if ( 'error' === $level ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions
+			error_log( '[Boostcart] ' . $entry );
+		}
+
+		if ( ! self::$enabled ) {
+			return;
+		}
+
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
-		file_put_contents( self::$log_file, $entry, FILE_APPEND | LOCK_EX );
+		file_put_contents( self::$log_file, $entry . "\n", FILE_APPEND | LOCK_EX );
 	}
 
 	public static function info( string $message, array $context = [] ): void {

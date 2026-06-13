@@ -5,10 +5,21 @@ import apiFetch from '@wordpress/api-fetch';
 
 const BASE = '/boostcart/v1';
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+/** Build a path with query string for GET requests. */
+function withQuery( path, params = {} ) {
+	const clean = Object.fromEntries(
+		Object.entries( params ).filter( ( [ , v ] ) => v !== undefined && v !== null && v !== '' )
+	);
+	if ( ! Object.keys( clean ).length ) return path;
+	return path + '?' + new URLSearchParams( clean ).toString();
+}
+
 // ── Campaigns ─────────────────────────────────────────────────────────────────
 
 export const getCampaigns = ( params = {} ) =>
-	apiFetch( { path: `${ BASE }/campaigns`, data: params, method: 'GET' } );
+	apiFetch( { path: withQuery( `${ BASE }/campaigns`, params ) } );
 
 export const getCampaign = ( id ) =>
 	apiFetch( { path: `${ BASE }/campaigns/${ id }` } );
@@ -56,7 +67,7 @@ export const saveConditions = ( campaignId, tree ) =>
 // ── Analytics ─────────────────────────────────────────────────────────────────
 
 export const getAnalyticsSummary = ( params = {} ) =>
-	apiFetch( { path: `${ BASE }/analytics/summary`, data: params, method: 'GET' } );
+	apiFetch( { path: withQuery( `${ BASE }/analytics/summary`, params ) } );
 
 export const getMilestoneRates = () =>
 	apiFetch( { path: `${ BASE }/analytics/milestones` } );
