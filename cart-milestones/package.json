@@ -1,0 +1,32 @@
+{
+	"name": "cart-milestones",
+	"version": "1.0.0",
+	"description": "Build tooling for Cart Milestones WooCommerce plugin",
+	"private": true,
+	"scripts": {
+		"build": "wp-scripts build",
+		"start": "wp-scripts start",
+		"lint:js": "wp-scripts lint-js",
+		"lint:css": "wp-scripts lint-style",
+		"packages-update": "wp-scripts packages-update",
+		"build:blocks": "wp-scripts build assets/blocks/cart-milestones/index.js --output-path=assets/blocks/cart-milestones/build"
+	},
+	"dependencies": {
+		"@wordpress/api-fetch": "^6.47",
+		"@wordpress/blocks": "^12.24",
+		"@wordpress/components": "^27.5",
+		"@wordpress/data": "^9.22",
+		"@wordpress/element": "^5.26",
+		"@wordpress/i18n": "^4.52",
+		"@wordpress/icons": "^9.43",
+		"react": "^18.3",
+		"react-dom": "^18.3",
+		"react-router-dom": "^6.26",
+		"recharts": "^2.12"
+	},
+	"devDependencies": {
+		"@wordpress/eslint-plugin": "^20.4",
+		"@wordpress/scripts": "^28.8",
+		"@wordpress/stylelint-config": "^21.39"
+	}
+}

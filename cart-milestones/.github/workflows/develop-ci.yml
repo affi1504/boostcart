@@ -1,0 +1,61 @@
+name: Develop CI
+
+on:
+  push:
+    branches: [develop]
+
+jobs:
+  build-and-test:
+    name: Build & Full Test Suite
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: wordpress_test
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          tools: composer:v2
+          extensions: mysqli, pdo_mysql
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Composer deps
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Install Node deps & build
+        run: npm ci && npm run build
+
+      - name: Install WordPress test suite
+        run: |
+          bash bin/install-wp-tests.sh wordpress_test root root 127.0.0.1 latest true
+
+      - name: Run full test suite
+        run: vendor/bin/phpunit --configuration=phpunit.xml.dist
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cart-milestones-develop-${{ github.sha }}
+          path: |
+            **
+            !node_modules
+            !.git
+            !tests
+            !vendor/squizlabs
+            !vendor/wp-phpunit

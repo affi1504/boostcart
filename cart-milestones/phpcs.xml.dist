@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<ruleset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         name="Cart Milestones"
+         xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/squizlabs/PHP_CodeSniffer/master/phpcs.xsd">
+
+	<description>Coding standards for the Cart Milestones plugin.</description>
+
+	<file>src/</file>
+	<file>cart-milestones.php</file>
+	<file>uninstall.php</file>
+
+	<exclude-pattern>*/vendor/*</exclude-pattern>
+	<exclude-pattern>*/node_modules/*</exclude-pattern>
+	<exclude-pattern>*/tests/*</exclude-pattern>
+
+	<arg name="basepath" value="."/>
+	<arg name="colors"/>
+	<arg value="sp"/>
+	<arg name="extensions" value="php"/>
+
+	<rule ref="WordPress-Core"/>
+	<rule ref="WordPress-Extra"/>
+	<rule ref="WordPress-Docs"/>
+
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<properties>
+			<property name="prefixes" type="array">
+				<element value="cart_milestones"/>
+				<element value="cm_"/>
+				<element value="CartMilestones"/>
+				<element value="CM_"/>
+			</property>
+		</properties>
+	</rule>
+
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array">
+				<element value="cart-milestones"/>
+			</property>
+		</properties>
+	</rule>
+
+	<config name="minimum_supported_wp_version" value="6.4"/>
+	<config name="testVersion" value="8.1-"/>
+
+</ruleset>

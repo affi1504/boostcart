@@ -1,0 +1,92 @@
+name: PR Checks
+
+on:
+  pull_request:
+    branches: [develop, main]
+
+jobs:
+  php-lint:
+    name: PHP Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          tools: composer:v2
+
+      - name: Get Composer cache dir
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer deps
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: composer-${{ hashFiles('composer.lock') }}
+
+      - name: Install Composer deps
+        run: composer install --no-dev --no-interaction --prefer-dist
+
+      - name: PHP syntax check
+        run: find src/ -name "*.php" -print0 | xargs -0 php -l
+
+  coding-standards:
+    name: Coding Standards
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          tools: composer:v2
+
+      - name: Install Composer deps
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Run PHPCS
+        run: vendor/bin/phpcs --standard=phpcs.xml.dist --report=checkstyle | cs2pr
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          tools: composer:v2
+          coverage: none
+
+      - name: Install Composer deps
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Run unit tests
+        run: vendor/bin/phpunit --configuration=phpunit.xml.dist --testsuite=unit
+
+  js-lint:
+    name: JS / CSS Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Lint JS
+        run: npm run lint:js
+
+      - name: Lint CSS
+        run: npm run lint:css
