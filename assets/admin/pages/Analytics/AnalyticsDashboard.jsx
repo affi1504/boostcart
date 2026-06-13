@@ -17,8 +17,8 @@ function MetricCard( { title, value, subtitle } ) {
 
 export function AnalyticsDashboard() {
 	const { fetchAnalytics } = useDispatch( STORE_NAME );
-	const analytics = useSelect( s => s[ STORE_NAME ].getAnalytics() );
-	const loading   = useSelect( s => s[ STORE_NAME ].getAnalyticsLoading() );
+	const analytics = useSelect( select => select( STORE_NAME ).getAnalytics() );
+	const loading   = useSelect( select => select( STORE_NAME ).getAnalyticsLoading() );
 
 	useEffect( () => { fetchAnalytics( {} ); }, [] );
 

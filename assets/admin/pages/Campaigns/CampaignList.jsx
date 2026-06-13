@@ -19,8 +19,8 @@ const STATUS_VARIANTS = {
 export function CampaignList() {
 	const navigate   = useNavigate();
 	const { fetchCampaigns } = useDispatch( STORE_NAME );
-	const campaigns  = useSelect( s => s[ STORE_NAME ].getCampaigns() );
-	const loading    = useSelect( s => s[ STORE_NAME ].getCampaignsLoading() );
+	const campaigns  = useSelect( select => select( STORE_NAME ).getCampaigns() );
+	const loading    = useSelect( select => select( STORE_NAME ).getCampaignsLoading() );
 	const [ busy, setBusy ] = useState( {} );
 
 	useEffect( () => { fetchCampaigns(); }, [] );
