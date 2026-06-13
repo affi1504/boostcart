@@ -1,0 +1,67 @@
+/* Cart Milestones — Design Tokens (Vercel-inspired) */
+:root {
+	/* Colors */
+	--cm-ink:            #171717;
+	--cm-body:           #4d4d4d;
+	--cm-mute:           #888888;
+	--cm-hairline:       #ebebeb;
+	--cm-hairline-strong:#a1a1a1;
+	--cm-canvas:         #ffffff;
+	--cm-canvas-soft:    #fafafa;
+	--cm-canvas-soft-2:  #f5f5f5;
+	--cm-link:           #0070f3;
+	--cm-success:        #0070f3;
+	--cm-error:          #ee0000;
+	--cm-error-soft:     #f7d4d6;
+	--cm-warning:        #f5a623;
+	--cm-warning-soft:   #ffefcf;
+	--cm-violet:         #7928ca;
+	--cm-cyan:           #50e3c2;
+
+	/* Gradient stops */
+	--cm-grad-develop-start: #007cf0;
+	--cm-grad-develop-end:   #00dfd8;
+	--cm-grad-preview-start: #7928ca;
+	--cm-grad-preview-end:   #ff0080;
+	--cm-grad-ship-start:    #ff4d4d;
+	--cm-grad-ship-end:      #f9cb28;
+
+	/* Radius */
+	--cm-radius-xs:   4px;
+	--cm-radius-sm:   6px;
+	--cm-radius-md:   8px;
+	--cm-radius-lg:   12px;
+	--cm-radius-xl:   16px;
+	--cm-radius-pill: 100px;
+	--cm-radius-full: 9999px;
+
+	/* Spacing */
+	--cm-space-xxs: 4px;
+	--cm-space-xs:  8px;
+	--cm-space-sm:  12px;
+	--cm-space-md:  16px;
+	--cm-space-lg:  24px;
+	--cm-space-xl:  32px;
+	--cm-space-2xl: 40px;
+	--cm-space-3xl: 48px;
+	--cm-space-4xl: 64px;
+
+	/* Typography */
+	--cm-font-sans: Geist, Inter, system-ui, -apple-system, sans-serif;
+	--cm-font-mono: 'Geist Mono', 'JetBrains Mono', ui-monospace, monospace;
+
+	/* Shadows */
+	--cm-shadow-card:
+		inset 0 0 0 1px rgba(0,0,0,.08),
+		0 1px 1px rgba(0,0,0,.03),
+		0 2px 2px rgba(0,0,0,.06);
+	--cm-shadow-float:
+		inset 0 0 0 1px rgba(0,0,0,.08),
+		0 2px 2px rgba(0,0,0,.04),
+		0 8px 16px -4px rgba(0,0,0,.10);
+	--cm-shadow-modal:
+		inset 0 0 0 1px rgba(0,0,0,.08),
+		0 1px 1px rgba(0,0,0,.03),
+		0 8px 16px -4px rgba(0,0,0,.10),
+		0 24px 32px -8px rgba(0,0,0,.06);
+}

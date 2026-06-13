@@ -1,0 +1,6 @@
+/* Gutenberg block editor preview styles */
+.cm-block-editor-preview {
+	border: 1px dashed #ebebeb;
+	border-radius: 8px;
+	padding: 16px;
+}

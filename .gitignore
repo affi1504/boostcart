@@ -1,0 +1,34 @@
+# Gitignore for Cart Milestones plugin
+
+# Composer
+/vendor/
+
+# Node
+/node_modules/
+
+# Build output
+/assets/build/
+
+# Environment files
+.env
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# PHPUnit cache
+.phpunit.cache/
+.phpunit.result.cache
+
+# Test artifacts
+/tmp/
+
+# WordPress test suite (installed by CI)
+/wordpress-tests-lib/

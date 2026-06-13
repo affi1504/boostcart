@@ -1,10 +1,12 @@
-# Project: Cart Milestones for WooCommerce
+# Project: Boostcart for WooCommerce
 
-Build a production-ready premium WooCommerce plugin called **Cart Milestones**.
+Build a production-ready premium WooCommerce plugin called **Boostcart for WooCommerce**.
 
 The primary goal of this plugin is to increase Average Order Value (AOV) through milestone-based rewards, progress tracking, gamification, and intelligent cart incentives.
 
 The plugin must be architected as a long-term commercial product.
+
+GitHub Repository: https://github.com/affi1504/boostcart
 
 ---
 
@@ -21,6 +23,8 @@ The entire plugin architecture should assume ongoing releases, automatic updates
 ## Git Repository Structure
 
 Use Git and GitHub.
+
+Repository: https://github.com/affi1504/boostcart
 
 Branch strategy:
 
@@ -64,7 +68,7 @@ Examples:
 
 ## GitHub Releases
 
-Plugin updates must be delivered through GitHub Releases.
+Plugin updates must be delivered through GitHub Releases at https://github.com/affi1504/boostcart/releases.
 
 Requirements:
 
@@ -149,7 +153,7 @@ Automatically:
 
 Generate:
 
-cart-milestones-vX.X.X.zip
+boostcart-vX.X.X.zip
 
 Exclude:
 
@@ -322,7 +326,7 @@ Support:
 
 Shortcode:
 
-[cart_milestones]
+[boostcart]
 
 ---
 
@@ -356,9 +360,9 @@ Provide:
 
 # Suggested Structure
 
-cart-milestones/
+boostcart/ (plugin root — lives directly at /Users/affi/Documents/Boostcart/)
 
-├── cart-milestones.php
+├── boostcart.php
 
 ├── src/
 │
@@ -403,7 +407,7 @@ cart-milestones/
 Provide:
 
 1. Complete plugin source code
-2. Installable ZIP
+2. Installable ZIP (boostcart-vX.X.X.zip)
 3. GitHub Actions workflows
 4. GitHub update system
 5. Rollback system

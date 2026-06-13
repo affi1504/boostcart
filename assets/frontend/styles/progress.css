@@ -1,0 +1,136 @@
+/* Cart Milestones — Progress Bar Styles */
+
+.cm-progress {
+	margin: 1rem 0;
+	font-family: inherit;
+}
+
+/* ── Loading spinner ── */
+.cm-progress__spinner {
+	display: inline-block;
+	width: 18px;
+	height: 18px;
+	border: 2px solid #ebebeb;
+	border-top-color: #171717;
+	border-radius: 50%;
+	animation: cm-spin 0.6s linear infinite;
+}
+
+@keyframes cm-spin {
+	to { transform: rotate(360deg); }
+}
+
+/* ── Message ── */
+.cm-progress__message {
+	font-size: 14px;
+	color: #4d4d4d;
+	margin-bottom: 0.5rem;
+	line-height: 1.4;
+}
+
+/* ── Horizontal track ── */
+.cm-progress__track {
+	position: relative;
+	height: 8px;
+	background: #f5f5f5;
+	border-radius: 100px;
+	overflow: visible;
+	box-shadow: inset 0 0 0 1px #ebebeb;
+}
+
+.cm-progress__fill {
+	height: 100%;
+	background: #171717;
+	border-radius: 100px;
+	transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+	max-width: 100%;
+}
+
+/* ── Milestone dots ── */
+.cm-progress__milestones {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+}
+
+.cm-milestone-dot {
+	position: absolute;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	width: 14px;
+	height: 14px;
+	border-radius: 50%;
+	background: #ffffff;
+	border: 2px solid #a1a1a1;
+	transition: border-color 0.3s, background 0.3s;
+}
+
+.cm-milestone-dot--earned {
+	background: #171717;
+	border-color: #171717;
+}
+
+.cm-milestone-dot--best-value {
+	border-color: #f5a623;
+}
+
+.cm-milestone-dot__star {
+	position: absolute;
+	top: -18px;
+	left: 50%;
+	transform: translateX(-50%);
+	font-size: 12px;
+}
+
+/* ── Vertical list ── */
+.cm-progress__list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.cm-milestone-item {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.5rem 0.75rem;
+	border-radius: 8px;
+	background: #fafafa;
+	box-shadow: 0 0 0 1px #ebebeb;
+	font-size: 14px;
+	color: #4d4d4d;
+	transition: background 0.2s;
+}
+
+.cm-milestone-item--earned {
+	background: #ffffff;
+	color: #171717;
+	box-shadow: 0 0 0 1px #171717;
+}
+
+.cm-milestone-item--best-value {
+	box-shadow: 0 0 0 2px #f5a623;
+}
+
+.cm-milestone-item__icon {
+	flex-shrink: 0;
+	font-size: 16px;
+}
+
+.cm-milestone-item__label {
+	flex: 1;
+	font-weight: 500;
+}
+
+.cm-milestone-item__threshold {
+	margin-left: auto;
+	font-size: 13px;
+	color: #888888;
+}
+
+.cm-milestone-item__best-value {
+	flex-shrink: 0;
+}

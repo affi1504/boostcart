@@ -1,0 +1,29 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "boostcart/progress",
+	"version": "1.0.0",
+	"title": "Boostcart Progress",
+	"category": "woocommerce",
+	"description": "Display Boostcart milestone progress bar and reward tracker.",
+	"keywords": [ "cart", "milestones", "rewards", "woocommerce", "boostcart" ],
+	"supports": {
+		"html": false,
+		"align": [ "wide", "full" ]
+	},
+	"attributes": {
+		"style": {
+			"type": "string",
+			"default": "horizontal",
+			"enum": [ "horizontal", "vertical" ]
+		},
+		"campaignId": {
+			"type": "integer",
+			"default": 0
+		}
+	},
+	"textdomain": "boostcart",
+	"editorScript": "file:./index.js",
+	"editorStyle": "file:./editor.css",
+	"render": "file:../../../src/Blocks/CartMilestonesBlock/render.php"
+}

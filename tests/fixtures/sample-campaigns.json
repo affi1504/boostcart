@@ -1,0 +1,133 @@
+[
+	{
+		"campaign": {
+			"name": "Free Shipping Milestone",
+			"status": "active",
+			"trigger_type": "cart_value",
+			"stacking_mode": "exclusive",
+			"target_scope": "store",
+			"target_ids": [],
+			"start_date": null,
+			"end_date": null,
+			"priority": 10
+		},
+		"milestones": [
+			{
+				"sort_order": 0,
+				"threshold_value": 500,
+				"reward_type": "free_shipping",
+				"reward_value": null,
+				"reward_meta": {},
+				"is_best_value": false,
+				"label": "Free Shipping",
+				"message_template": "Only {remaining} more for Free Shipping!"
+			},
+			{
+				"sort_order": 1,
+				"threshold_value": 1000,
+				"reward_type": "percentage_discount",
+				"reward_value": 10,
+				"reward_meta": {},
+				"is_best_value": true,
+				"label": "10% OFF",
+				"message_template": "Add {remaining} more for {label}"
+			},
+			{
+				"sort_order": 2,
+				"threshold_value": 2000,
+				"reward_type": "fixed_discount",
+				"reward_value": 300,
+				"reward_meta": {},
+				"is_best_value": false,
+				"label": "₹300 OFF",
+				"message_template": "You're {remaining} away from ₹300 off!"
+			}
+		],
+		"conditions": []
+	},
+	{
+		"campaign": {
+			"name": "Loyal Customer Rewards",
+			"status": "active",
+			"trigger_type": "lifetime_spend",
+			"stacking_mode": "exclusive",
+			"target_scope": "roles",
+			"target_ids": ["customer"],
+			"start_date": null,
+			"end_date": null,
+			"priority": 20
+		},
+		"milestones": [
+			{
+				"sort_order": 0,
+				"threshold_value": 5000,
+				"reward_type": "store_credit",
+				"reward_value": 250,
+				"reward_meta": {},
+				"is_best_value": false,
+				"label": "₹250 Store Credit",
+				"message_template": "Spend {remaining} more (lifetime) for ₹250 store credit"
+			},
+			{
+				"sort_order": 1,
+				"threshold_value": 10000,
+				"reward_type": "coupon_unlock",
+				"reward_value": null,
+				"reward_meta": { "coupon_code": "VIP500" },
+				"is_best_value": true,
+				"label": "VIP ₹500 Coupon",
+				"message_template": "Only {remaining} more lifetime spend to unlock your VIP coupon"
+			}
+		],
+		"conditions": [
+			{
+				"condition_type": "group",
+				"operator": "AND",
+				"children": [
+					{
+						"condition_type": "customer_role",
+						"comparator": "=",
+						"value": "customer",
+						"meta": { "roles": ["customer"] }
+					}
+				]
+			}
+		]
+	},
+	{
+		"campaign": {
+			"name": "Buy 3 Get Discount",
+			"status": "active",
+			"trigger_type": "product_qty",
+			"stacking_mode": "stackable",
+			"target_scope": "store",
+			"target_ids": [],
+			"start_date": null,
+			"end_date": null,
+			"priority": 15
+		},
+		"milestones": [
+			{
+				"sort_order": 0,
+				"threshold_value": 3,
+				"reward_type": "percentage_discount",
+				"reward_value": 5,
+				"reward_meta": {},
+				"is_best_value": false,
+				"label": "5% OFF",
+				"message_template": "Add {qty_remaining} more items for 5% off"
+			},
+			{
+				"sort_order": 1,
+				"threshold_value": 5,
+				"reward_type": "percentage_discount",
+				"reward_value": 10,
+				"reward_meta": {},
+				"is_best_value": true,
+				"label": "10% OFF",
+				"message_template": "Add {qty_remaining} more items for 10% off"
+			}
+		],
+		"conditions": []
+	}
+]

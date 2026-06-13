@@ -1,0 +1,68 @@
+/* Cart Milestones Admin — Global Styles */
+@import './tokens.css';
+
+/* Reset WP admin interference inside the app root */
+#cm-admin-root * {
+	box-sizing: border-box;
+}
+
+#cm-admin-root {
+	font-family: var(--cm-font-sans);
+	font-size: 14px;
+	color: var(--cm-ink);
+	background: var(--cm-canvas-soft);
+	min-height: calc(100vh - 46px);
+}
+
+.cm-app {
+	display: flex;
+	min-height: calc(100vh - 46px);
+}
+
+.cm-main {
+	flex: 1;
+	padding: var(--cm-space-lg);
+	max-width: 1200px;
+}
+
+/* Page header */
+.cm-page-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: var(--cm-space-xl);
+}
+
+.cm-page-title {
+	font-size: 24px;
+	font-weight: 600;
+	letter-spacing: -0.96px;
+	color: var(--cm-ink);
+	margin: 0;
+}
+
+/* Empty state */
+.cm-empty-state {
+	text-align: center;
+	padding: var(--cm-space-3xl);
+	background: var(--cm-canvas-soft);
+	border-radius: var(--cm-radius-lg);
+	box-shadow: var(--cm-shadow-card);
+}
+
+.cm-empty-state__icon {
+	font-size: 48px;
+	margin-bottom: var(--cm-space-md);
+}
+
+.cm-empty-state__title {
+	font-size: 20px;
+	font-weight: 600;
+	letter-spacing: -0.6px;
+	margin: 0 0 8px;
+}
+
+.cm-empty-state__body {
+	color: var(--cm-body);
+	margin: 0 0 var(--cm-space-lg);
+}

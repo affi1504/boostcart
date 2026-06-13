@@ -1,0 +1,103 @@
+/* Cart Milestones — Floating Widget */
+
+#cm-floating-widget {
+	position: fixed;
+	z-index: 9999;
+	bottom: 24px;
+	right: 24px;
+	font-family: inherit;
+}
+
+/* Mobile: sticky bar at bottom */
+@media (max-width: 599px) {
+	#cm-floating-widget {
+		bottom: 0;
+		right: 0;
+		left: 0;
+		border-radius: 0;
+	}
+
+	.cm-floating-widget__toggle {
+		border-radius: 0 !important;
+		width: 100%;
+		justify-content: center;
+	}
+}
+
+.cm-floating-widget__toggle {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	background: #171717;
+	color: #ffffff;
+	border: none;
+	border-radius: 100px;
+	padding: 10px 16px;
+	cursor: pointer;
+	font-size: 14px;
+	font-weight: 500;
+	box-shadow: 0 2px 2px rgba(0,0,0,.06), 0 8px 16px -4px rgba(0,0,0,.1);
+	transition: transform 0.15s;
+}
+
+.cm-floating-widget__toggle:hover {
+	transform: translateY(-1px);
+}
+
+.cm-floating-widget__toggle:focus-visible {
+	outline: 2px solid #0070f3;
+	outline-offset: 2px;
+}
+
+.cm-floating-widget__icon {
+	font-size: 16px;
+}
+
+.cm-floating-widget__panel {
+	position: absolute;
+	bottom: calc(100% + 8px);
+	right: 0;
+	width: 280px;
+	background: #ffffff;
+	border-radius: 12px;
+	box-shadow:
+		inset 0 0 0 1px rgba(0,0,0,.08),
+		0 2px 2px rgba(0,0,0,.04),
+		0 8px 16px -4px rgba(0,0,0,.1);
+	padding: 16px;
+	font-size: 14px;
+}
+
+@media (max-width: 599px) {
+	.cm-floating-widget__panel {
+		right: 0;
+		width: 100vw;
+		border-radius: 12px 12px 0 0;
+	}
+}
+
+.cm-fw-milestone {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 6px 0;
+	border-bottom: 1px solid #ebebeb;
+	color: #4d4d4d;
+}
+
+.cm-fw-milestone:last-child {
+	border-bottom: none;
+}
+
+.cm-fw-milestone--earned {
+	color: #171717;
+}
+
+.cm-fw-milestone--best-value .cm-fw-milestone__label::after {
+	content: ' ⭐';
+}
+
+.cm-fw-milestone__label {
+	flex: 1;
+	font-weight: 500;
+}

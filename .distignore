@@ -1,0 +1,25 @@
+# Files and directories to exclude from the distribution ZIP.
+/.git
+/.github
+/.gitignore
+/node_modules
+/tests
+/vendor/bin
+/vendor/squizlabs
+/vendor/wp-phpunit
+/vendor/yoast
+/vendor/phpcompatibility
+/vendor/wp-coding-standards
+composer.json
+composer.lock
+package.json
+package-lock.json
+phpcs.xml.dist
+phpunit.xml.dist
+webpack.config.js
+CHANGELOG.md
+*.map
+assets/admin/
+assets/blocks/boostcart/index.js
+assets/blocks/boostcart/editor.css
+assets/frontend/*.js
