@@ -71,7 +71,7 @@ if ( cartRoot ) {
 	observer.observe( cartRoot, { childList: true, subtree: true, attributes: true, attributeFilter: [ 'class', 'data-block-name' ] } );
 }
 
-// ── Initial page load ─────────────────────────────────────────────────────
-document.addEventListener( 'DOMContentLoaded', () => fetchProgress() );
+// ── After JS injection, immediately fetch progress ────────────────────────
+window.addEventListener( 'cm:inject-complete', () => scheduleFetch( 100 ) );
 
 export { fetchProgress };

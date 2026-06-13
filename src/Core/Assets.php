@@ -78,6 +78,7 @@ class Assets {
 
 		$this->enqueue_frontend_asset( 'progress' );
 		$this->enqueue_frontend_asset( 'celebrations' );
+		$this->enqueue_frontend_asset( 'injector' );
 		$this->enqueue_frontend_asset( 'cart-watcher' );
 
 		if ( in_array( 'mini_cart', $locations, true ) ) {
@@ -88,9 +89,10 @@ class Assets {
 			'cm-frontend-cart-watcher',
 			'cmFrontendData',
 			[
-				'restUrl' => esc_url_raw( rest_url( 'boostcart/v1/' ) ),
-				'nonce'   => wp_create_nonce( 'wp_rest' ),
-				'ajax'    => admin_url( 'admin-ajax.php' ),
+				'restUrl'   => esc_url_raw( rest_url( 'boostcart/v1/' ) ),
+				'nonce'     => wp_create_nonce( 'wp_rest' ),
+				'ajax'      => admin_url( 'admin-ajax.php' ),
+				'locations' => $locations,
 			]
 		);
 	}

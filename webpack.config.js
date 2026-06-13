@@ -13,6 +13,10 @@ module.exports = {
 			__dirname,
 			'assets/frontend/cart-watcher.js'
 		),
+		'frontend/injector': path.resolve(
+			__dirname,
+			'assets/frontend/injector.js'
+		),
 		'frontend/progress': path.resolve(
 			__dirname,
 			'assets/frontend/progress.js'
