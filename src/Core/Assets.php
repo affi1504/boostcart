@@ -62,14 +62,27 @@ class Assets {
 	}
 
 	public function enqueue_frontend_scripts(): void {
-		if ( ! is_cart() && ! is_checkout() && ! is_product() && ! is_product_category() && ! is_wc_endpoint_url() ) {
+		$settings  = (array) get_option( 'cm_settings', [] );
+		$locations = (array) ( $settings['display_locations'] ?? [ 'cart', 'checkout', 'mini_cart' ] );
+
+		$is_targeted_page = (
+			( in_array( 'cart', $locations, true )     && is_cart() ) ||
+			( in_array( 'checkout', $locations, true ) && is_checkout() ) ||
+			( in_array( 'product', $locations, true )  && is_product() ) ||
+			( in_array( 'mini_cart', $locations, true ) )  // mini cart can appear on any page
+		);
+
+		if ( ! $is_targeted_page ) {
 			return;
 		}
 
 		$this->enqueue_frontend_asset( 'progress' );
-		$this->enqueue_frontend_asset( 'floating-widget' );
 		$this->enqueue_frontend_asset( 'celebrations' );
 		$this->enqueue_frontend_asset( 'cart-watcher' );
+
+		if ( in_array( 'mini_cart', $locations, true ) ) {
+			$this->enqueue_frontend_asset( 'mini-cart' );
+		}
 
 		wp_localize_script(
 			'cm-frontend-cart-watcher',

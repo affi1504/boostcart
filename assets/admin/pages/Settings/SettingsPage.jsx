@@ -8,12 +8,10 @@ import { Spinner } from '../../components/ui/Spinner';
 import { ProgressPreview, PROGRESS_STYLES } from '../../components/ui/ProgressPreview';
 
 const LOCATION_OPTIONS = [
-	{ key: 'cart',            label: __( 'Cart Page', 'boostcart' ) },
-	{ key: 'checkout',        label: __( 'Checkout Page', 'boostcart' ) },
-	{ key: 'product',         label: __( 'Product Page', 'boostcart' ) },
-	{ key: 'category',        label: __( 'Category Page', 'boostcart' ) },
-	{ key: 'mini_cart',       label: __( 'Mini Cart', 'boostcart' ) },
-	{ key: 'floating_widget', label: __( 'Floating Widget', 'boostcart' ) },
+	{ key: 'cart',      label: __( 'Cart Page', 'boostcart' ) },
+	{ key: 'checkout',  label: __( 'Checkout Page', 'boostcart' ) },
+	{ key: 'product',   label: __( 'Product Page', 'boostcart' ) },
+	{ key: 'mini_cart', label: __( 'Mini Cart', 'boostcart' ) },
 ];
 
 const CELEBRATION_OPTIONS = [

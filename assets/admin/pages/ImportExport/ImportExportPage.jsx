@@ -87,18 +87,26 @@ export function ImportExportPage() {
 					{ __( 'Imported campaigns are created as inactive. Existing campaigns are not overwritten.', 'boostcart' ) }
 				</p>
 				{ fileError && <p style={ { color: 'var(--cm-error)', marginBottom: 8 } }>{ fileError }</p> }
-				<label className="cm-file-label">
+				<div style={ { display: 'flex', alignItems: 'center', gap: 12 } }>
 					<input
+						id="cm-import-file"
 						type="file"
 						accept="application/json,.json"
 						onChange={ handleImportFile }
 						disabled={ importing }
 						style={ { display: 'none' } }
 					/>
-					<Button variant="secondary" loading={ importing } as="span">
+					<Button
+						variant="secondary"
+						loading={ importing }
+						onClick={ () => document.getElementById( 'cm-import-file' ).click() }
+					>
 						{ importing ? __( 'Importing…', 'boostcart' ) : __( 'Choose JSON File', 'boostcart' ) }
 					</Button>
-				</label>
+					<span style={ { fontSize: 12, color: 'var(--cm-mute)' } }>
+						{ __( 'Only .json files exported from Boostcart', 'boostcart' ) }
+					</span>
+				</div>
 			</Card>
 		</div>
 	);

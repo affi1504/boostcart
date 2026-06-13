@@ -10,7 +10,7 @@ class LocationManager {
 
 	public function register( Loader $loader ): void {
 		$settings  = (array) get_option( 'cm_settings', [] );
-		$locations = (array) ( $settings['display_locations'] ?? [ 'cart', 'checkout', 'floating_widget' ] );
+		$locations = (array) ( $settings['display_locations'] ?? [ 'cart', 'checkout', 'mini_cart' ] );
 
 		if ( in_array( 'cart', $locations, true ) ) {
 			$loader->add_action( 'woocommerce_before_cart_table', [ $this, 'render_horizontal' ], 10 );
@@ -21,14 +21,8 @@ class LocationManager {
 		if ( in_array( 'product', $locations, true ) ) {
 			$loader->add_action( 'woocommerce_single_product_summary', [ $this, 'render_horizontal' ], 35 );
 		}
-		if ( in_array( 'category', $locations, true ) ) {
-			$loader->add_action( 'woocommerce_before_shop_loop', [ $this, 'render_horizontal' ], 5 );
-		}
 		if ( in_array( 'mini_cart', $locations, true ) ) {
 			$loader->add_action( 'woocommerce_before_mini_cart_contents', [ $this, 'render_mini_cart' ], 5 );
-		}
-		if ( in_array( 'floating_widget', $locations, true ) ) {
-			$loader->add_action( 'wp_footer', [ $this, 'render_floating_widget' ], 100 );
 		}
 	}
 
