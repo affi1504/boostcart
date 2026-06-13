@@ -12,7 +12,6 @@ class MilestoneService {
 
 	public function create( int $campaign_id, array $data ): array {
 		$data = $this->sanitize( $data );
-		// Auto-assign sort_order if not set.
 		if ( ! isset( $data['sort_order'] ) ) {
 			$existing         = $this->repository->find_by_campaign( $campaign_id );
 			$data['sort_order'] = count( $existing );
@@ -36,13 +35,24 @@ class MilestoneService {
 	}
 
 	private function sanitize( array $data ): array {
-		$allowed_types = [
+		$allowed_triggers = [
+			'cart_value', 'product_qty', 'category_qty', 'category_spend',
+			'product_spend', 'lifetime_spend', 'lifetime_orders',
+		];
+		$allowed_rewards = [
 			'percentage_discount', 'fixed_discount', 'free_shipping',
 			'free_product', 'store_credit', 'coupon_unlock', 'custom',
 		];
+		$allowed_comparators = [ '>=', '<=', '>', '<', '=', '!=' ];
 
-		if ( isset( $data['reward_type'] ) && ! in_array( $data['reward_type'], $allowed_types, true ) ) {
+		if ( isset( $data['trigger_type'] ) && ! in_array( $data['trigger_type'], $allowed_triggers, true ) ) {
+			$data['trigger_type'] = 'cart_value';
+		}
+		if ( isset( $data['reward_type'] ) && ! in_array( $data['reward_type'], $allowed_rewards, true ) ) {
 			$data['reward_type'] = 'fixed_discount';
+		}
+		if ( isset( $data['comparator'] ) && ! in_array( $data['comparator'], $allowed_comparators, true ) ) {
+			$data['comparator'] = '>=';
 		}
 		if ( isset( $data['threshold_value'] ) ) {
 			$data['threshold_value'] = max( 0.0, (float) $data['threshold_value'] );
@@ -52,6 +62,9 @@ class MilestoneService {
 		}
 		if ( isset( $data['is_best_value'] ) ) {
 			$data['is_best_value'] = (int) (bool) $data['is_best_value'];
+		}
+		if ( isset( $data['trigger_target_ids'] ) ) {
+			$data['trigger_target_ids'] = array_map( 'intval', (array) $data['trigger_target_ids'] );
 		}
 
 		return $data;

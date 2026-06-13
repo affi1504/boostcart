@@ -2,75 +2,58 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { __ } from '@wordpress/i18n';
 import { getCampaign, createCampaign, updateCampaign } from '../../api/client';
+import apiFetch from '@wordpress/api-fetch';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Card } from '../../components/ui/Card';
 import { Spinner } from '../../components/ui/Spinner';
+import { EntityPicker } from '../../components/ui/EntityPicker';
 import { MilestoneBuilder } from '../Builder/MilestoneBuilder';
 import { ConditionBuilder } from '../Builder/ConditionBuilder';
 
-const TRIGGER_OPTIONS = [
-	{ value: 'cart_value',      label: __( 'Cart Value', 'boostcart' ) },
-	{ value: 'product_qty',     label: __( 'Product Quantity', 'boostcart' ) },
-	{ value: 'category_qty',    label: __( 'Category Quantity', 'boostcart' ) },
-	{ value: 'category_spend',  label: __( 'Category Spend', 'boostcart' ) },
-	{ value: 'product_spend',   label: __( 'Product Spend', 'boostcart' ) },
-	{ value: 'lifetime_spend',  label: __( 'Lifetime Spend', 'boostcart' ) },
-	{ value: 'lifetime_orders', label: __( 'Lifetime Orders', 'boostcart' ) },
-];
-
-const TRIGGER_HINTS = {
-	cart_value:      __( 'Milestones unlock based on the total value of items in the cart right now.', 'boostcart' ),
-	product_qty:     __( 'Milestones unlock when the customer adds a certain number of specific products.', 'boostcart' ),
-	category_qty:    __( 'Milestones unlock based on the total quantity of items from a specific category.', 'boostcart' ),
-	category_spend:  __( 'Milestones unlock based on the total amount spent on items from a specific category.', 'boostcart' ),
-	product_spend:   __( 'Milestones unlock based on the total amount spent on specific products.', 'boostcart' ),
-	lifetime_spend:  __( 'Milestones unlock based on how much the customer has spent across all previous orders.', 'boostcart' ),
-	lifetime_orders: __( 'Milestones unlock based on how many orders the customer has placed in total.', 'boostcart' ),
-};
-
 const SCOPE_OPTIONS = [
-	{ value: 'store',      label: __( 'Entire Store', 'boostcart' ) },
-	{ value: 'categories', label: __( 'Specific Categories', 'boostcart' ) },
-	{ value: 'products',   label: __( 'Specific Products', 'boostcart' ) },
-	{ value: 'roles',      label: __( 'Customer Roles', 'boostcart' ) },
+	{ value: 'store',      label: __( 'All Customers', 'boostcart' ) },
+	{ value: 'categories', label: __( 'Customers with items from specific categories', 'boostcart' ) },
+	{ value: 'products',   label: __( 'Customers with specific products in cart', 'boostcart' ) },
+	{ value: 'roles',      label: __( 'Customers with specific user roles', 'boostcart' ) },
 ];
-
-const SCOPE_HINTS = {
-	store:      __( 'This campaign applies to every customer on your store.', 'boostcart' ),
-	categories: __( 'Only customers who have items from the selected categories in their cart will see this campaign.', 'boostcart' ),
-	products:   __( 'Only customers who have the selected products in their cart will see this campaign.', 'boostcart' ),
-	roles:      __( 'Only customers with the selected user role (e.g. Wholesale, VIP) will see this campaign.', 'boostcart' ),
-};
 
 const STACKING_OPTIONS = [
-	{ value: 'exclusive', label: __( 'Exclusive — highest milestone only', 'boostcart' ) },
-	{ value: 'stackable', label: __( 'Stackable — all earned milestones', 'boostcart' ) },
+	{ value: 'exclusive', label: __( 'Exclusive — best reward per trigger group', 'boostcart' ) },
+	{ value: 'stackable', label: __( 'Stackable — all earned rewards apply', 'boostcart' ) },
 ];
 
-const STACKING_HINTS = {
-	exclusive: __( 'Only the highest milestone the customer has reached will apply its reward. Best for tiered discounts.', 'boostcart' ),
-	stackable: __( 'Every milestone the customer reaches applies its own reward. Best for free gifts or free shipping combined with discounts.', 'boostcart' ),
-};
+const STATUS_OPTIONS = [
+	{ value: 'inactive',  label: __( 'Inactive (draft)', 'boostcart' ) },
+	{ value: 'active',    label: __( 'Active', 'boostcart' ) },
+	{ value: 'scheduled', label: __( 'Scheduled (use dates below)', 'boostcart' ) },
+];
+
+const WP_ROLES = [
+	{ value: 'customer',      label: __( 'Customer', 'boostcart' ) },
+	{ value: 'subscriber',    label: __( 'Subscriber', 'boostcart' ) },
+	{ value: 'wholesale_customer', label: __( 'Wholesale Customer', 'boostcart' ) },
+];
 
 export function CampaignEditor() {
-	const { id }    = useParams();
-	const navigate  = useNavigate();
-	const isNew     = id === 'new';
+	const { id }   = useParams();
+	const navigate = useNavigate();
+	const isNew    = id === 'new';
 
-	const [ loading, setLoading ]   = useState( ! isNew );
-	const [ saving, setSaving ]     = useState( false );
-	const [ errors, setErrors ]     = useState( {} );
+	const [ loading, setLoading ] = useState( ! isNew );
+	const [ saving, setSaving ]   = useState( false );
+	const [ errors, setErrors ]   = useState( {} );
+
 	const [ campaign, setCampaign ] = useState( {
 		name:          '',
 		status:        'inactive',
-		trigger_type:  'cart_value',
 		stacking_mode: 'exclusive',
 		target_scope:  'store',
 		target_ids:    [],
 		start_date:    '',
 		end_date:      '',
+		priority:      10,
 		milestones:    [],
 		conditions:    [],
 	} );
@@ -78,7 +61,16 @@ export function CampaignEditor() {
 	useEffect( () => {
 		if ( isNew ) return;
 		getCampaign( id )
-			.then( data => setCampaign( prev => ( { ...prev, ...data } ) ) )
+			.then( data => {
+				setCampaign( prev => ( {
+					...prev,
+					...data,
+					milestones: data.milestones || [],
+					conditions: data.conditions || [],
+					target_ids: data.target_ids || [],
+				} ) );
+			} )
+			.catch( err => setErrors( { _global: err.message } ) )
 			.finally( () => setLoading( false ) );
 	}, [ id ] );
 
@@ -88,29 +80,85 @@ export function CampaignEditor() {
 
 	async function handleSave() {
 		const errs = {};
-		if ( ! campaign.name.trim() ) errs.name = __( 'Name is required.', 'boostcart' );
-		if ( Object.keys( errs ).length ) { setErrors( errs ); return; }
+		if ( ! campaign.name.trim() ) {
+			errs.name = __( 'Campaign name is required.', 'boostcart' );
+		}
+		if ( ! campaign.milestones || campaign.milestones.length === 0 ) {
+			errs.milestones = __( 'At least one milestone is required.', 'boostcart' );
+		}
+
+		if ( Object.keys( errs ).length ) {
+			setErrors( errs );
+			// Scroll to top to show error.
+			window.scrollTo( { top: 0, behavior: 'smooth' } );
+			return;
+		}
 
 		setSaving( true );
+		setErrors( {} );
+
 		try {
+			let savedCampaign;
 			if ( isNew ) {
-				await createCampaign( campaign );
+				savedCampaign = await createCampaign( {
+					name:          campaign.name,
+					status:        campaign.status,
+					stacking_mode: campaign.stacking_mode,
+					target_scope:  campaign.target_scope,
+					target_ids:    campaign.target_ids,
+					start_date:    campaign.start_date || null,
+					end_date:      campaign.end_date || null,
+					priority:      campaign.priority,
+				} );
 			} else {
-				await updateCampaign( id, campaign );
+				savedCampaign = await updateCampaign( id, {
+					name:          campaign.name,
+					status:        campaign.status,
+					stacking_mode: campaign.stacking_mode,
+					target_scope:  campaign.target_scope,
+					target_ids:    campaign.target_ids,
+					start_date:    campaign.start_date || null,
+					end_date:      campaign.end_date || null,
+					priority:      campaign.priority,
+				} );
 			}
-			// Pass success message to campaign list via navigation state.
-			navigate( '/campaigns', { state: { successMessage: isNew
-				? __( 'Campaign created successfully.', 'boostcart' )
-				: __( 'Campaign updated successfully.', 'boostcart' )
-			} } );
+
+			const campaignId = savedCampaign.id;
+
+			// Save milestones via batch endpoint.
+			await apiFetch( {
+				path:   `/boostcart/v1/campaigns/${ campaignId }/milestones/batch`,
+				method: 'POST',
+				data:   { milestones: campaign.milestones },
+			} );
+
+			// Save conditions.
+			await apiFetch( {
+				path:   `/boostcart/v1/campaigns/${ campaignId }/conditions`,
+				method: 'PUT',
+				data:   { tree: campaign.conditions },
+			} );
+
+			navigate( '/campaigns', {
+				state: {
+					successMessage: isNew
+						? __( 'Campaign created successfully.', 'boostcart' )
+						: __( 'Campaign updated successfully.', 'boostcart' ),
+				},
+			} );
 		} catch ( e ) {
-			setErrors( { _global: e.message || __( 'An error occurred. Check the Debug tab in Settings for details.', 'boostcart' ) } );
+			setErrors( { _global: e.message || __( 'Save failed. Check the Debug tab in Settings for details.', 'boostcart' ) } );
+			window.scrollTo( { top: 0, behavior: 'smooth' } );
 		} finally {
 			setSaving( false );
 		}
 	}
 
-	if ( loading ) return <div style={ { padding: 32, textAlign: 'center' } }><Spinner /></div>;
+	if ( loading ) {
+		return <div style={ { padding: 32, textAlign: 'center' } }><Spinner /></div>;
+	}
+
+	const showDateFields = campaign.status === 'scheduled' || campaign.start_date || campaign.end_date;
 
 	return (
 		<div>
@@ -129,21 +177,20 @@ export function CampaignEditor() {
 			</div>
 
 			{ errors._global && (
-				<div className="cm-notice cm-notice--error">{ errors._global }</div>
+				<div className="cm-notice cm-notice--error" style={ { marginBottom: 16 } }>
+					{ errors._global }
+				</div>
 			) }
 
 			<div className="cm-editor-grid">
 
-				{/* ── Campaign Details ── */}
+				{/* ── 1. Basics ── */}
 				<Card>
-					<h2 className="cm-section-title">{ __( 'Campaign Details', 'boostcart' ) }</h2>
-					<p className="cm-section-hint">
-						{ __( 'A campaign groups a set of milestones together. Customers progress through its milestones as they shop.', 'boostcart' ) }
-					</p>
+					<h2 className="cm-section-title">{ __( '1. Basics', 'boostcart' ) }</h2>
 
 					<Input
 						label={ __( 'Campaign Name', 'boostcart' ) }
-						hint={ __( 'Internal label — customers do not see this.', 'boostcart' ) }
+						hint={ __( 'Internal label — not shown to customers.', 'boostcart' ) }
 						required
 						value={ campaign.name }
 						onChange={ e => set( 'name', e.target.value ) }
@@ -152,74 +199,158 @@ export function CampaignEditor() {
 
 					<div className="cm-field-row" style={ { marginTop: 16 } }>
 						<Select
-							label={ __( 'Trigger Type', 'boostcart' ) }
-							options={ TRIGGER_OPTIONS }
-							value={ campaign.trigger_type }
-							hint={ TRIGGER_HINTS[ campaign.trigger_type ] }
-							onChange={ e => set( 'trigger_type', e.target.value ) }
+							label={ __( 'Status', 'boostcart' ) }
+							options={ STATUS_OPTIONS }
+							value={ campaign.status }
+							hint={
+								campaign.status === 'active'
+									? __( 'Campaign is live and visible to customers.', 'boostcart' )
+									: campaign.status === 'scheduled'
+									? __( 'Campaign will activate automatically on the start date.', 'boostcart' )
+									: __( 'Campaign is saved but not shown to customers.', 'boostcart' )
+							}
+							onChange={ e => set( 'status', e.target.value ) }
 						/>
 						<Select
 							label={ __( 'Stacking Mode', 'boostcart' ) }
 							options={ STACKING_OPTIONS }
 							value={ campaign.stacking_mode }
-							hint={ STACKING_HINTS[ campaign.stacking_mode ] }
+							hint={
+								campaign.stacking_mode === 'exclusive'
+									? __( 'Within each trigger group (e.g. all category_qty milestones), only the highest earned milestone applies. Across different trigger types, one reward per group.', 'boostcart' )
+									: __( 'All earned milestones apply simultaneously.', 'boostcart' )
+							}
 							onChange={ e => set( 'stacking_mode', e.target.value ) }
 						/>
 					</div>
 
-					<div style={ { marginTop: 16 } }>
-						<Select
-							label={ __( 'Target Scope', 'boostcart' ) }
-							options={ SCOPE_OPTIONS }
-							value={ campaign.target_scope }
-							hint={ SCOPE_HINTS[ campaign.target_scope ] }
-							onChange={ e => set( 'target_scope', e.target.value ) }
-						/>
-					</div>
+					{ ( showDateFields || campaign.status === 'scheduled' ) && (
+						<div className="cm-field-row" style={ { marginTop: 16 } }>
+							<Input
+								label={ __( 'Start Date', 'boostcart' ) }
+								type="datetime-local"
+								hint={ __( 'Campaign becomes active at this time. Leave blank to activate immediately.', 'boostcart' ) }
+								value={ campaign.start_date || '' }
+								onChange={ e => set( 'start_date', e.target.value ) }
+							/>
+							<Input
+								label={ __( 'End Date', 'boostcart' ) }
+								type="datetime-local"
+								hint={ __( 'Campaign expires at this time. Leave blank to run indefinitely.', 'boostcart' ) }
+								value={ campaign.end_date || '' }
+								onChange={ e => set( 'end_date', e.target.value ) }
+							/>
+						</div>
+					) }
 
-					<div className="cm-field-row" style={ { marginTop: 16 } }>
-						<Input
-							label={ __( 'Start Date', 'boostcart' ) }
-							type="datetime-local"
-							hint={ __( 'Leave blank to activate immediately when status is set to Active.', 'boostcart' ) }
-							value={ campaign.start_date || '' }
-							onChange={ e => set( 'start_date', e.target.value ) }
-						/>
-						<Input
-							label={ __( 'End Date', 'boostcart' ) }
-							type="datetime-local"
-							hint={ __( 'Leave blank to run indefinitely.', 'boostcart' ) }
-							value={ campaign.end_date || '' }
-							onChange={ e => set( 'end_date', e.target.value ) }
-						/>
-					</div>
+					{ ! showDateFields && campaign.status !== 'scheduled' && (
+						<button
+							type="button"
+							className="cm-link-btn"
+							style={ { marginTop: 12 } }
+							onClick={ () => set( 'status', 'scheduled' ) }
+						>
+							{ __( '+ Set start / end dates', 'boostcart' ) }
+						</button>
+					) }
 				</Card>
 
-				{/* ── Milestones ── */}
+				{/* ── 2. Who sees this ── */}
 				<Card>
-					<h2 className="cm-section-title">{ __( 'Milestones & Rewards', 'boostcart' ) }</h2>
+					<h2 className="cm-section-title">{ __( '2. Who Sees This', 'boostcart' ) }</h2>
 					<p className="cm-section-hint">
-						{ __( 'Each milestone is a threshold the customer must reach to unlock a reward. Add as many as you like — they are sorted by threshold automatically.', 'boostcart' ) }
+						{ __( 'Controls which customers see the progress widget. Does not affect what gets measured — that is set per milestone.', 'boostcart' ) }
 					</p>
+
+					<Select
+						label={ __( 'Show campaign to', 'boostcart' ) }
+						options={ SCOPE_OPTIONS }
+						value={ campaign.target_scope }
+						onChange={ e => { set( 'target_scope', e.target.value ); set( 'target_ids', [] ); } }
+					/>
+
+					{ campaign.target_scope === 'categories' && (
+						<div className="cm-field" style={ { marginTop: 12 } }>
+							<label className="cm-field__label">{ __( 'Categories', 'boostcart' ) }</label>
+							<p className="cm-field__hint">{ __( 'Only shown when cart contains items from these categories.', 'boostcart' ) }</p>
+							<EntityPicker
+								endpoint="categories"
+								value={ campaign.target_ids }
+								onChange={ ids => set( 'target_ids', ids ) }
+							/>
+						</div>
+					) }
+
+					{ campaign.target_scope === 'products' && (
+						<div className="cm-field" style={ { marginTop: 12 } }>
+							<label className="cm-field__label">{ __( 'Products', 'boostcart' ) }</label>
+							<p className="cm-field__hint">{ __( 'Only shown when cart contains these specific products.', 'boostcart' ) }</p>
+							<EntityPicker
+								endpoint="products"
+								value={ campaign.target_ids }
+								onChange={ ids => set( 'target_ids', ids ) }
+							/>
+						</div>
+					) }
+
+					{ campaign.target_scope === 'roles' && (
+						<div className="cm-field" style={ { marginTop: 12 } }>
+							<label className="cm-field__label">{ __( 'User Roles', 'boostcart' ) }</label>
+							<p className="cm-field__hint">{ __( 'Only shown to customers with one of these roles.', 'boostcart' ) }</p>
+							<div style={ { display: 'flex', flexDirection: 'column', gap: 6 } }>
+								{ WP_ROLES.map( role => (
+									<label key={ role.value } className="cm-checkbox-row">
+										<input
+											type="checkbox"
+											checked={ ( campaign.target_ids || [] ).includes( role.value ) }
+											onChange={ e => {
+												const ids = ( campaign.target_ids || [] ).slice();
+												if ( e.target.checked ) {
+													ids.push( role.value );
+												} else {
+													const i = ids.indexOf( role.value );
+													if ( i >= 0 ) ids.splice( i, 1 );
+												}
+												set( 'target_ids', ids );
+											} }
+										/>
+										{ role.label }
+									</label>
+								) ) }
+							</div>
+						</div>
+					) }
+				</Card>
+
+				{/* ── 3. Milestones ── */}
+				<Card>
+					<h2 className="cm-section-title">{ __( '3. Milestones & Rewards', 'boostcart' ) }</h2>
+					<p className="cm-section-hint">
+						{ __( 'Each milestone has its own trigger. Mix cart value, category quantity, lifetime spend — all in one campaign, one progress bar.', 'boostcart' ) }
+					</p>
+					{ errors.milestones && (
+						<div className="cm-notice cm-notice--error" style={ { marginBottom: 12 } }>
+							{ errors.milestones }
+						</div>
+					) }
 					<MilestoneBuilder
-						campaignId={ isNew ? null : id }
 						milestones={ campaign.milestones }
 						onChange={ milestones => set( 'milestones', milestones ) }
 					/>
 				</Card>
 
-				{/* ── Conditions ── */}
+				{/* ── 4. Advanced Conditions ── */}
 				<Card>
-					<h2 className="cm-section-title">{ __( 'Conditions', 'boostcart' ) }</h2>
+					<h2 className="cm-section-title">{ __( '4. Extra Conditions', 'boostcart' ) }</h2>
 					<p className="cm-section-hint">
-						{ __( 'Optional extra rules that must pass for this campaign to show. Leave empty to always show. Use AND to require all rules, OR to require any one of them.', 'boostcart' ) }
+						{ __( 'Optional additional rules that must pass before this campaign is shown. Leave empty to show to all eligible customers.', 'boostcart' ) }
 					</p>
 					<ConditionBuilder
-						campaignId={ isNew ? null : id }
 						tree={ campaign.conditions }
 						onChange={ conditions => set( 'conditions', conditions ) }
 					/>
 				</Card>
+
 			</div>
 		</div>
 	);

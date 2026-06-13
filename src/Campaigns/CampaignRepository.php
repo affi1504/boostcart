@@ -154,7 +154,8 @@ class CampaignRepository {
 	}
 
 	private function formats( array $data ): array {
-		$string_cols = [ 'name', 'status', 'trigger_type', 'stacking_mode', 'target_scope', 'target_ids', 'start_date', 'end_date' ];
+		// trigger_type removed from campaigns in v2 — lives on milestones now.
+		$string_cols = [ 'name', 'status', 'stacking_mode', 'target_scope', 'target_ids', 'start_date', 'end_date' ];
 		$formats     = [];
 		foreach ( array_keys( $data ) as $col ) {
 			$formats[] = in_array( $col, $string_cols, true ) ? '%s' : '%d';

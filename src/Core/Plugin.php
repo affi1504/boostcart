@@ -37,6 +37,8 @@ class Plugin {
 	public function run(): void {
 		// Boot logger early so all subsequent code can use it.
 		Logger::boot();
+		// Run schema migrations for existing installs silently.
+		Activator::maybe_migrate();
 		$this->define_i18n_hooks();
 		$this->define_update_hooks();
 		$this->define_admin_hooks();

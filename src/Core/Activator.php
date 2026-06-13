@@ -13,6 +13,20 @@ class Activator {
 		update_option( 'cm_version', CM_VERSION );
 	}
 
+	/**
+	 * Run on every plugin load to apply schema migrations for existing installs.
+	 * Safe to call repeatedly — only alters if the column is missing.
+	 */
+	public static function maybe_migrate(): void {
+		$db_version = get_option( 'cm_db_version', '0' );
+		if ( version_compare( $db_version, '2.0', '>=' ) ) {
+			return;
+		}
+		self::create_tables(); // dbDelta handles ADD COLUMN for existing tables.
+		self::migrate_trigger_type_to_milestones();
+		update_option( 'cm_db_version', '2.0' );
+	}
+
 	private static function create_tables(): void {
 		global $wpdb;
 
@@ -20,11 +34,12 @@ class Activator {
 
 		$sql = [];
 
+		// Keep trigger_type on campaigns for backwards compat but it is now
+		// informational only — the real trigger lives on each milestone.
 		$sql[] = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}cm_campaigns (
 			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			name VARCHAR(255) NOT NULL,
 			status ENUM('active','inactive','scheduled','expired') NOT NULL DEFAULT 'inactive',
-			trigger_type ENUM('cart_value','product_qty','category_qty','category_spend','product_spend','lifetime_spend','lifetime_orders') NOT NULL DEFAULT 'cart_value',
 			stacking_mode ENUM('stackable','exclusive') NOT NULL DEFAULT 'exclusive',
 			target_scope ENUM('store','categories','products','roles') NOT NULL DEFAULT 'store',
 			target_ids JSON NULL,
@@ -39,11 +54,15 @@ class Activator {
 			KEY end_date (end_date)
 		) $charset_collate;";
 
+		// trigger_type, trigger_target_ids and comparator are new in v2.
 		$sql[] = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}cm_milestones (
 			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			campaign_id BIGINT UNSIGNED NOT NULL,
 			sort_order SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-			threshold_value DECIMAL(15,4) NOT NULL,
+			trigger_type VARCHAR(30) NOT NULL DEFAULT 'cart_value',
+			trigger_target_ids JSON NULL,
+			comparator VARCHAR(2) NOT NULL DEFAULT '>=',
+			threshold_value DECIMAL(15,4) NOT NULL DEFAULT 0,
 			reward_type ENUM('percentage_discount','fixed_discount','free_shipping','free_product','store_credit','coupon_unlock','custom') NOT NULL,
 			reward_value DECIMAL(15,4) NULL,
 			reward_meta JSON NULL,
@@ -54,7 +73,8 @@ class Activator {
 			PRIMARY KEY (id),
 			KEY campaign_id (campaign_id),
 			KEY sort_order (sort_order),
-			CONSTRAINT fk_cm_milestones_campaign FOREIGN KEY (campaign_id) REFERENCES {$wpdb->prefix}cm_campaigns (id) ON DELETE CASCADE
+			CONSTRAINT fk_cm_milestones_campaign FOREIGN KEY (campaign_id)
+				REFERENCES {$wpdb->prefix}cm_campaigns (id) ON DELETE CASCADE
 		) $charset_collate;";
 
 		$sql[] = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}cm_conditions (
@@ -70,7 +90,8 @@ class Activator {
 			PRIMARY KEY (id),
 			KEY campaign_id (campaign_id),
 			KEY parent_id (parent_id),
-			CONSTRAINT fk_cm_conditions_campaign FOREIGN KEY (campaign_id) REFERENCES {$wpdb->prefix}cm_campaigns (id) ON DELETE CASCADE
+			CONSTRAINT fk_cm_conditions_campaign FOREIGN KEY (campaign_id)
+				REFERENCES {$wpdb->prefix}cm_campaigns (id) ON DELETE CASCADE
 		) $charset_collate;";
 
 		$sql[] = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}cm_analytics_events (
@@ -108,13 +129,38 @@ class Activator {
 		}
 	}
 
+	/**
+	 * For v1 installs: copy trigger_type from campaign to all its milestones.
+	 */
+	private static function migrate_trigger_type_to_milestones(): void {
+		global $wpdb;
+
+		// Check if the old trigger_type column still exists on campaigns.
+		$col = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			"SHOW COLUMNS FROM {$wpdb->prefix}cm_campaigns LIKE 'trigger_type'" // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		);
+
+		if ( empty( $col ) ) {
+			return; // Already migrated or fresh install — nothing to do.
+		}
+
+		// Copy trigger_type from each campaign to milestones that don't have one yet.
+		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.NotPrepared
+			"UPDATE {$wpdb->prefix}cm_milestones m
+			 JOIN {$wpdb->prefix}cm_campaigns c ON c.id = m.campaign_id
+			 SET m.trigger_type = c.trigger_type
+			 WHERE m.trigger_type = 'cart_value'
+			   AND c.trigger_type != 'cart_value'" // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		);
+	}
+
 	private static function set_default_options(): void {
 		$defaults = [
-			'display_locations'  => [ 'cart', 'checkout', 'floating_widget' ],
-			'celebration_types'  => [ 'confetti', 'toast' ],
-			'currency_symbol'    => get_woocommerce_currency_symbol(),
-			'update_channel'     => 'github',
-			'github_repo'        => CM_GITHUB_REPO,
+			'display_locations' => [ 'cart', 'checkout', 'floating_widget' ],
+			'celebration_types' => [ 'confetti', 'toast' ],
+			'currency_symbol'   => get_woocommerce_currency_symbol(),
+			'update_channel'    => 'github',
+			'github_repo'       => CM_GITHUB_REPO,
 		];
 
 		if ( false === get_option( 'cm_settings' ) ) {

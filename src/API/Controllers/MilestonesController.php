@@ -49,6 +49,16 @@ class MilestonesController {
 			'callback'            => [ $this, 'set_best_value' ],
 			'permission_callback' => [ AuthMiddleware::class, 'manage_woocommerce' ],
 		] );
+
+		// Batch save — replaces all milestones for a campaign atomically.
+		register_rest_route( $namespace, '/campaigns/(?P<campaign_id>[\d]+)/milestones/batch', [
+			'methods'             => \WP_REST_Server::CREATABLE,
+			'callback'            => [ $this, 'batch_save' ],
+			'permission_callback' => [ AuthMiddleware::class, 'manage_woocommerce' ],
+			'args'                => [
+				'milestones' => [ 'type' => 'array', 'required' => true ],
+			],
+		] );
 	}
 
 	public function index( \WP_REST_Request $request ): \WP_REST_Response {
@@ -59,16 +69,18 @@ class MilestonesController {
 	public function create( \WP_REST_Request $request ): \WP_REST_Response|\WP_Error {
 		$campaign_id = (int) $request->get_param( 'campaign_id' );
 		try {
-			$milestone = $this->service->create( $campaign_id, $request->get_params() );
+			$data      = $this->extract_milestone_data( $request );
+			$milestone = $this->service->create( $campaign_id, $data );
 			return new \WP_REST_Response( $milestone, 201 );
-		} catch ( \InvalidArgumentException $e ) {
+		} catch ( \Throwable $e ) {
 			return new \WP_Error( 'cm_invalid', $e->getMessage(), [ 'status' => 422 ] );
 		}
 	}
 
 	public function update( \WP_REST_Request $request ): \WP_REST_Response|\WP_Error {
 		$id = (int) $request->get_param( 'id' );
-		$milestone = $this->service->update( $id, $request->get_params() );
+		$data      = $this->extract_milestone_data( $request );
+		$milestone = $this->service->update( $id, $data );
 		if ( null === $milestone ) {
 			return new \WP_Error( 'cm_not_found', __( 'Milestone not found.', 'boostcart' ), [ 'status' => 404 ] );
 		}
@@ -91,19 +103,64 @@ class MilestonesController {
 		return new \WP_REST_Response( [ 'success' => true ], 200 );
 	}
 
+	/**
+	 * Atomically replace all milestones for a campaign.
+	 * Deletes existing ones and inserts the new set.
+	 */
+	public function batch_save( \WP_REST_Request $request ): \WP_REST_Response|\WP_Error {
+		$campaign_id = (int) $request->get_param( 'campaign_id' );
+		$milestones  = (array) $request->get_param( 'milestones' );
+
+		if ( empty( $milestones ) ) {
+			return new \WP_Error( 'cm_invalid', __( 'At least one milestone is required.', 'boostcart' ), [ 'status' => 422 ] );
+		}
+
+		$this->repository->delete_by_campaign( $campaign_id );
+
+		$saved = [];
+		foreach ( $milestones as $i => $ms ) {
+			$ms['sort_order'] = $i;
+			try {
+				$saved[] = $this->service->create( $campaign_id, $ms );
+			} catch ( \Throwable $e ) {
+				\CartMilestones\Core\Logger::error( 'Milestone batch save failed', [ 'index' => $i, 'error' => $e->getMessage() ] );
+			}
+		}
+
+		return new \WP_REST_Response( $saved, 200 );
+	}
+
+	private function extract_milestone_data( \WP_REST_Request $request ): array {
+		$allowed = [
+			'trigger_type', 'trigger_target_ids', 'comparator',
+			'threshold_value', 'reward_type', 'reward_value', 'reward_meta',
+			'is_best_value', 'label', 'message_template', 'sort_order',
+		];
+		$data = [];
+		foreach ( $allowed as $key ) {
+			if ( null !== $request->get_param( $key ) ) {
+				$data[ $key ] = $request->get_param( $key );
+			}
+		}
+		return $data;
+	}
+
 	private function milestone_schema(): array {
 		return [
-			'threshold_value' => [ 'type' => 'number', 'minimum' => 0 ],
-			'reward_type'     => [
+			'trigger_type'       => [ 'type' => 'string' ],
+			'trigger_target_ids' => [ 'type' => 'array' ],
+			'comparator'         => [ 'type' => 'string', 'enum' => [ '>=', '<=', '>', '<', '=', '!=' ] ],
+			'threshold_value'    => [ 'type' => 'number', 'minimum' => 0 ],
+			'reward_type'        => [
 				'type' => 'string',
 				'enum' => [ 'percentage_discount', 'fixed_discount', 'free_shipping', 'free_product', 'store_credit', 'coupon_unlock', 'custom' ],
 			],
-			'reward_value'    => [ 'type' => 'number', 'minimum' => 0 ],
-			'reward_meta'     => [ 'type' => 'object' ],
-			'is_best_value'   => [ 'type' => 'boolean' ],
-			'label'           => [ 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ],
-			'message_template' => [ 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ],
-			'sort_order'      => [ 'type' => 'integer', 'minimum' => 0 ],
+			'reward_value'       => [ 'type' => 'number', 'minimum' => 0 ],
+			'reward_meta'        => [ 'type' => 'object' ],
+			'is_best_value'      => [ 'type' => 'boolean' ],
+			'label'              => [ 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ],
+			'message_template'   => [ 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ],
+			'sort_order'         => [ 'type' => 'integer', 'minimum' => 0 ],
 		];
 	}
 }

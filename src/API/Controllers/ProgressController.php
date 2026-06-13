@@ -36,25 +36,32 @@ class ProgressController {
 			return new \WP_REST_Response( [], 200 );
 		}
 
-		$active     = $this->evaluator->get_active_for_cart();
-		$cart_total = (float) WC()->cart->get_cart_contents_total();
-		$result     = [];
+		$active = $this->evaluator->get_active_for_cart();
+		$result = [];
 
 		foreach ( $active as $entry ) {
 			$campaign   = $entry['campaign'];
-			$milestones = $entry['milestones'];
-			$state      = $this->calculator->calculate( $milestones, $cart_total );
+			$milestones = $entry['milestones']; // already have `earned` + `current_value`
+			$state      = $this->calculator->calculate( $milestones );
 
-			// Build message.
+			// Build the primary progress message — target the next milestone.
 			$next    = $state['next_milestone'];
 			$message = '';
+
 			if ( $next ) {
 				$template = $next['message_template'] ?? '';
-				$message  = $template
-					? $this->renderer->render( $template, $state, $next )
-					: $this->renderer->default_message( $state, $next );
+				$remaining = max( 0.0, (float) $next['threshold_value'] - (float) $next['current_value'] );
+				$progress_state = [
+					'remaining'     => $remaining,
+					'current_value' => $next['current_value'],
+					'percent'       => $state['groups'][0]['percent'] ?? 0,
+					'all_earned'    => false,
+				];
+				$message = $template
+					? $this->renderer->render( $template, $progress_state, $next )
+					: $this->renderer->default_message( $progress_state, $next );
 			} elseif ( $state['all_earned'] ) {
-				$message = $this->renderer->default_message( $state, null );
+				$message = $this->renderer->default_message( [ 'all_earned' => true, 'remaining' => 0 ], null );
 			}
 
 			$result[] = [

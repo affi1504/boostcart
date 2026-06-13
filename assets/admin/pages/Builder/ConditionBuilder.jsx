@@ -1,18 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { __ } from '@wordpress/i18n';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
 import { Input } from '../../components/ui/Input';
+import { EntityPicker } from '../../components/ui/EntityPicker';
 
 const CONDITION_TYPES = [
 	{ value: 'cart_value',      label: __( 'Cart Value', 'boostcart' ) },
+	{ value: 'customer_role',   label: __( 'Customer Role', 'boostcart' ) },
 	{ value: 'product_qty',     label: __( 'Product Quantity', 'boostcart' ) },
 	{ value: 'category_qty',    label: __( 'Category Quantity', 'boostcart' ) },
-	{ value: 'category_spend',  label: __( 'Category Spend', 'boostcart' ) },
-	{ value: 'product_spend',   label: __( 'Product Spend', 'boostcart' ) },
 	{ value: 'lifetime_spend',  label: __( 'Lifetime Spend', 'boostcart' ) },
 	{ value: 'lifetime_orders', label: __( 'Lifetime Orders', 'boostcart' ) },
-	{ value: 'customer_role',   label: __( 'Customer Role', 'boostcart' ) },
 	{ value: 'date_range',      label: __( 'Date Range', 'boostcart' ) },
 ];
 
@@ -22,90 +21,159 @@ const COMPARATORS = [
 	{ value: '>',  label: '>'  },
 	{ value: '<',  label: '<'  },
 	{ value: '=',  label: '='  },
-	{ value: '!=', label: '≠'  },
 ];
 
-function emptyGroup( operator = 'AND' ) {
-	return { _id: uid(), condition_type: 'group', operator, children: [] };
-}
+const WP_ROLES = [
+	{ value: 'customer',      label: __( 'Customer', 'boostcart' ) },
+	{ value: 'subscriber',    label: __( 'Subscriber', 'boostcart' ) },
+	{ value: 'wholesale_customer', label: __( 'Wholesale Customer', 'boostcart' ) },
+	{ value: 'editor',        label: __( 'Editor', 'boostcart' ) },
+	{ value: 'administrator', label: __( 'Administrator', 'boostcart' ) },
+];
 
-function emptyLeaf() {
+let _uid = 1000;
+function uid() { return ++_uid; }
+
+function emptyRule() {
 	return { _id: uid(), condition_type: 'cart_value', comparator: '>=', value: '', meta: {} };
 }
 
-let _uid = 0;
-function uid() { return ++_uid; }
-
-function ConditionNode( { node, onUpdate, onRemove } ) {
-	if ( node.condition_type === 'group' ) {
-		return (
-			<div className="cm-cond-group">
-				<div className="cm-cond-group__header">
-					<Select
-						options={ [ { value: 'AND', label: 'AND' }, { value: 'OR', label: 'OR' } ] }
-						value={ node.operator }
-						onChange={ e => onUpdate( { ...node, operator: e.target.value } ) }
-					/>
-					<Button variant="ghost" size="sm" onClick={ () => onUpdate( { ...node, children: [ ...node.children, emptyLeaf() ] } ) }>
-						{ __( '+ Condition', 'boostcart' ) }
-					</Button>
-					<Button variant="ghost" size="sm" onClick={ () => onUpdate( { ...node, children: [ ...node.children, emptyGroup() ] } ) }>
-						{ __( '+ Group', 'boostcart' ) }
-					</Button>
-					{ onRemove && (
-						<Button variant="danger" size="sm" onClick={ onRemove }>{ __( 'Remove Group', 'boostcart' ) }</Button>
-					) }
-				</div>
-				<div className="cm-cond-group__children">
-					{ node.children.map( child => (
-						<ConditionNode
-							key={ child._id }
-							node={ child }
-							onUpdate={ updated => onUpdate( { ...node, children: node.children.map( c => c._id === updated._id ? updated : c ) } ) }
-							onRemove={ () => onUpdate( { ...node, children: node.children.filter( c => c._id !== child._id ) } ) }
-						/>
-					) ) }
-				</div>
-			</div>
-		);
-	}
+function RuleRow( { rule, onUpdate, onRemove } ) {
+	const type = rule.condition_type;
 
 	return (
-		<div className="cm-cond-leaf">
+		<div className="cm-rule-row">
 			<Select
 				options={ CONDITION_TYPES }
-				value={ node.condition_type }
-				onChange={ e => onUpdate( { ...node, condition_type: e.target.value } ) }
+				value={ type }
+				onChange={ e => onUpdate( { ...rule, condition_type: e.target.value, value: '', meta: {} } ) }
 			/>
-			<Select
-				options={ COMPARATORS }
-				value={ node.comparator }
-				onChange={ e => onUpdate( { ...node, comparator: e.target.value } ) }
-			/>
-			<Input
-				type="text"
-				placeholder={ __( 'Value', 'boostcart' ) }
-				value={ node.value }
-				onChange={ e => onUpdate( { ...node, value: e.target.value } ) }
-			/>
-			<Button variant="ghost" size="sm" onClick={ onRemove } aria-label={ __( 'Remove condition', 'boostcart' ) }>✕</Button>
+
+			{ type === 'customer_role' && (
+				<Select
+					options={ WP_ROLES }
+					value={ rule.meta?.role || 'customer' }
+					onChange={ e => onUpdate( { ...rule, meta: { role: e.target.value } } ) }
+				/>
+			) }
+
+			{ type === 'date_range' && (
+				<>
+					<Input
+						type="date"
+						placeholder={ __( 'Start date', 'boostcart' ) }
+						value={ rule.meta?.start_date || '' }
+						onChange={ e => onUpdate( { ...rule, meta: { ...rule.meta, start_date: e.target.value } } ) }
+					/>
+					<Input
+						type="date"
+						placeholder={ __( 'End date', 'boostcart' ) }
+						value={ rule.meta?.end_date || '' }
+						onChange={ e => onUpdate( { ...rule, meta: { ...rule.meta, end_date: e.target.value } } ) }
+					/>
+				</>
+			) }
+
+			{ type !== 'customer_role' && type !== 'date_range' && (
+				<>
+					<Select
+						options={ COMPARATORS }
+						value={ rule.comparator }
+						onChange={ e => onUpdate( { ...rule, comparator: e.target.value } ) }
+					/>
+					<input
+						type="number"
+						className="cm-field__input"
+						placeholder={ __( 'Value', 'boostcart' ) }
+						value={ rule.value }
+						min="0"
+						step="0.01"
+						onChange={ e => onUpdate( { ...rule, value: e.target.value } ) }
+						style={ { width: 100, flexShrink: 0 } }
+					/>
+				</>
+			) }
+
+			<button
+				type="button"
+				className="cm-rule-remove"
+				onClick={ onRemove }
+				aria-label={ __( 'Remove rule', 'boostcart' ) }
+			>✕</button>
 		</div>
 	);
 }
 
 export function ConditionBuilder( { tree = [], onChange } ) {
-	const [ root, setRoot ] = useState(
-		tree.length ? tree[ 0 ] : emptyGroup( 'AND' )
-	);
+	const init = () => {
+		if ( tree.length && tree[0]?.children?.length ) {
+			return {
+				operator: tree[0].operator || 'AND',
+				rules:    tree[0].children.map( c => ( { _id: uid(), ...c } ) ),
+			};
+		}
+		return { operator: 'AND', rules: [] };
+	};
 
-	function handleUpdate( updated ) {
-		setRoot( updated );
-		onChange( [ updated ] );
+	const [ operator, setOperator ] = useState( init().operator );
+	const [ rules, setRules ]       = useState( init().rules );
+
+	function push( op, rs ) {
+		setOperator( op );
+		setRules( rs );
+		onChange( rs.length ? [ { condition_type: 'group', operator: op, children: rs } ] : [] );
+	}
+
+	function addRule() {
+		push( operator, [ ...rules, emptyRule() ] );
+	}
+
+	function updateRule( _id, updated ) {
+		push( operator, rules.map( r => r._id === _id ? updated : r ) );
+	}
+
+	function removeRule( _id ) {
+		push( operator, rules.filter( r => r._id !== _id ) );
+	}
+
+	function changeOperator( op ) {
+		push( op, rules );
 	}
 
 	return (
-		<div className="cm-condition-builder">
-			<ConditionNode node={ root } onUpdate={ handleUpdate } onRemove={ null } />
+		<div className="cm-condition-builder-v2">
+			{ rules.length === 0 ? (
+				<div className="cm-hint-box">
+					{ __( 'No extra conditions. This campaign will be shown to all eligible customers. Add rules to restrict further.', 'boostcart' ) }
+				</div>
+			) : (
+				<div className="cm-condition-builder-v2__header">
+					<span>{ __( 'Show campaign when', 'boostcart' ) }</span>
+					<Select
+						options={ [
+							{ value: 'AND', label: __( 'ALL rules match', 'boostcart' ) },
+							{ value: 'OR',  label: __( 'ANY rule matches', 'boostcart' ) },
+						] }
+						value={ operator }
+						onChange={ e => changeOperator( e.target.value ) }
+					/>
+				</div>
+			) }
+
+			<div className="cm-condition-builder-v2__rules">
+				{ rules.map( rule => (
+					<RuleRow
+						key={ rule._id }
+						rule={ rule }
+						onUpdate={ updated => updateRule( rule._id, updated ) }
+						onRemove={ () => removeRule( rule._id ) }
+					/>
+				) ) }
+			</div>
+
+			<Button variant="ghost" size="sm" onClick={ addRule } style={ { marginTop: 8 } }>
+				{ __( '+ Add Rule', 'boostcart' ) }
+			</Button>
 		</div>
 	);
 }

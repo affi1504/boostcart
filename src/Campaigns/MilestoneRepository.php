@@ -13,12 +13,9 @@ class MilestoneRepository {
 		$this->table = $wpdb->prefix . 'cm_milestones';
 	}
 
-	/**
-	 * @return array<array>
-	 */
+	/** @return array<array> */
 	public function find_by_campaign( int $campaign_id ): array {
 		global $wpdb;
-
 		$rows = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			$wpdb->prepare(
 				"SELECT * FROM {$this->table} WHERE campaign_id = %d ORDER BY sort_order ASC, threshold_value ASC", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -26,7 +23,6 @@ class MilestoneRepository {
 			),
 			ARRAY_A
 		);
-
 		return array_map( [ $this, 'hydrate' ], $rows ?? [] );
 	}
 
@@ -62,8 +58,7 @@ class MilestoneRepository {
 
 	public function delete( int $id ): bool {
 		global $wpdb;
-		$result = $wpdb->delete( $this->table, [ 'id' => $id ], [ '%d' ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		return false !== $result;
+		return false !== $wpdb->delete( $this->table, [ 'id' => $id ], [ '%d' ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 	}
 
 	public function delete_by_campaign( int $campaign_id ): void {
@@ -71,7 +66,6 @@ class MilestoneRepository {
 		$wpdb->delete( $this->table, [ 'campaign_id' => $campaign_id ], [ '%d' ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 	}
 
-	/** Clear best_value flag on all milestones for a campaign, then set on one. */
 	public function set_best_value( int $campaign_id, int $milestone_id ): void {
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -81,11 +75,14 @@ class MilestoneRepository {
 	}
 
 	private function hydrate( array $row ): array {
-		$row['reward_meta']      = ! empty( $row['reward_meta'] ) ? json_decode( $row['reward_meta'], true ) : [];
-		$row['threshold_value']  = (float) $row['threshold_value'];
-		$row['reward_value']     = isset( $row['reward_value'] ) ? (float) $row['reward_value'] : null;
-		$row['is_best_value']    = (bool) $row['is_best_value'];
-		$row['sort_order']       = (int) $row['sort_order'];
+		$row['reward_meta']        = ! empty( $row['reward_meta'] ) ? json_decode( $row['reward_meta'], true ) : [];
+		$row['trigger_target_ids'] = ! empty( $row['trigger_target_ids'] ) ? json_decode( $row['trigger_target_ids'], true ) : [];
+		$row['threshold_value']    = (float) $row['threshold_value'];
+		$row['reward_value']       = isset( $row['reward_value'] ) ? (float) $row['reward_value'] : null;
+		$row['is_best_value']      = (bool) $row['is_best_value'];
+		$row['sort_order']         = (int) $row['sort_order'];
+		$row['trigger_type']       = $row['trigger_type'] ?? 'cart_value';
+		$row['comparator']         = $row['comparator'] ?? '>=';
 		return $row;
 	}
 
@@ -93,13 +90,16 @@ class MilestoneRepository {
 		if ( isset( $data['reward_meta'] ) && is_array( $data['reward_meta'] ) ) {
 			$data['reward_meta'] = wp_json_encode( $data['reward_meta'] );
 		}
+		if ( isset( $data['trigger_target_ids'] ) && is_array( $data['trigger_target_ids'] ) ) {
+			$data['trigger_target_ids'] = wp_json_encode( $data['trigger_target_ids'] );
+		}
 		unset( $data['id'], $data['created_at'] );
-		return $data;
+		return array_filter( $data, static fn( $v ) => null !== $v );
 	}
 
 	private function formats( array $data ): array {
 		$float_cols  = [ 'threshold_value', 'reward_value' ];
-		$string_cols = [ 'reward_type', 'reward_meta', 'label', 'message_template' ];
+		$string_cols = [ 'trigger_type', 'trigger_target_ids', 'comparator', 'reward_type', 'reward_meta', 'label', 'message_template' ];
 		$formats     = [];
 		foreach ( array_keys( $data ) as $col ) {
 			if ( in_array( $col, $float_cols, true ) ) {

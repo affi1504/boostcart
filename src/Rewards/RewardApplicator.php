@@ -18,7 +18,8 @@ class RewardApplicator {
 	) {}
 
 	/**
-	 * Called on woocommerce_cart_calculate_fees. Applies all earned rewards.
+	 * Called on woocommerce_cart_calculate_fees.
+	 * Applies earned rewards using per-milestone stacking logic.
 	 */
 	public function apply_rewards(): void {
 		$active = $this->evaluator->get_active_for_cart();
@@ -26,45 +27,60 @@ class RewardApplicator {
 			return;
 		}
 
-		$cart_total = (float) WC()->cart->get_cart_contents_total();
-
 		foreach ( $active as $entry ) {
-			$campaign  = $entry['campaign'];
-			$milestones = $entry['milestones'];
+			$campaign   = $entry['campaign'];
+			$milestones = $entry['milestones']; // each has `earned` boolean
+			$stacking   = $campaign['stacking_mode'] ?? 'exclusive';
 
-			// Sort milestones ascending by threshold.
-			usort( $milestones, static fn( $a, $b ) => $a['threshold_value'] <=> $b['threshold_value'] );
-
-			$earned   = [];
-			$stacking = $campaign['stacking_mode'] ?? 'exclusive';
-
-			foreach ( $milestones as $milestone ) {
-				if ( $cart_total >= (float) $milestone['threshold_value'] ) {
-					$earned[] = $milestone;
-				}
-			}
-
+			$earned = array_filter( $milestones, fn( $m ) => $m['earned'] );
 			if ( empty( $earned ) ) {
 				continue;
 			}
 
-			// For exclusive mode, only apply the highest earned milestone.
-			$to_apply = ( 'exclusive' === $stacking ) ? [ end( $earned ) ] : $earned;
+			$to_apply = $this->resolve_rewards( array_values( $earned ), $stacking );
 
 			foreach ( $to_apply as $milestone ) {
-				$reward_type = $milestone['reward_type'];
-				$reward      = $this->factory->make( $reward_type );
-				$context     = [ 'cart_total' => $cart_total ];
-
-				$reward->apply( $milestone, $context );
+				$reward = $this->factory->make( $milestone['reward_type'] );
+				$reward->apply( $milestone, [ 'cart_total' => (float) WC()->cart->get_cart_contents_total() ] );
 
 				$this->tracker->track_reward_applied(
 					(int) $campaign['id'],
 					(int) $milestone['id'],
-					$cart_total,
+					(float) WC()->cart->get_cart_contents_total(),
 					(float) ( $milestone['reward_value'] ?? 0.0 )
 				);
 			}
 		}
+	}
+
+	/**
+	 * Resolve which milestones actually apply their rewards.
+	 *
+	 * Exclusive: within each trigger-type group, only the highest-threshold
+	 *            earned milestone applies. Across groups, each contributes one.
+	 * Stackable: every earned milestone applies.
+	 *
+	 * @param  array  $earned    All earned milestones (already filtered).
+	 * @param  string $stacking  'exclusive' | 'stackable'
+	 * @return array             Milestones whose rewards should be applied.
+	 */
+	private function resolve_rewards( array $earned, string $stacking ): array {
+		if ( 'stackable' === $stacking ) {
+			return $earned;
+		}
+
+		// Exclusive: group by trigger_type + trigger_target_ids, keep highest.
+		$groups = [];
+		foreach ( $earned as $ms ) {
+			$ids = array_map( 'intval', (array) ( $ms['trigger_target_ids'] ?? [] ) );
+			sort( $ids );
+			$key = $ms['trigger_type'] . ( $ids ? '_' . implode( '_', $ids ) : '' );
+			if ( ! isset( $groups[ $key ] )
+				|| (float) $ms['threshold_value'] > (float) $groups[ $key ]['threshold_value'] ) {
+				$groups[ $key ] = $ms;
+			}
+		}
+
+		return array_values( $groups );
 	}
 }
