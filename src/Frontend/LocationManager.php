@@ -8,6 +8,12 @@ use CartMilestones\Core\Loader;
 
 class LocationManager {
 
+	private FrontendRenderer $renderer;
+
+	public function __construct() {
+		$this->renderer = new FrontendRenderer();
+	}
+
 	public function register( Loader $loader ): void {
 		$settings  = (array) get_option( 'cm_settings', [] );
 		$locations = (array) ( $settings['display_locations'] ?? [ 'cart', 'checkout', 'mini_cart' ] );
@@ -27,30 +33,10 @@ class LocationManager {
 	}
 
 	public function render_horizontal(): void {
-		$template = CM_PLUGIN_DIR . 'templates/progress-horizontal.php';
-		if ( file_exists( $template ) ) {
-			include $template;
-		}
-	}
-
-	public function render_vertical(): void {
-		$template = CM_PLUGIN_DIR . 'templates/progress-vertical.php';
-		if ( file_exists( $template ) ) {
-			include $template;
-		}
+		$this->renderer->render_widget( 'horizontal' );
 	}
 
 	public function render_mini_cart(): void {
-		$template = CM_PLUGIN_DIR . 'templates/mini-cart-widget.php';
-		if ( file_exists( $template ) ) {
-			include $template;
-		}
-	}
-
-	public function render_floating_widget(): void {
-		$template = CM_PLUGIN_DIR . 'templates/floating-widget.php';
-		if ( file_exists( $template ) ) {
-			include $template;
-		}
+		$this->renderer->render_mini_cart_widget();
 	}
 }

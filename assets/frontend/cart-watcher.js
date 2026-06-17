@@ -1,6 +1,6 @@
 /**
  * Boostcart — Cart Watcher
- * Listens for WooCommerce cart update events and refreshes CM widgets.
+ * Uses pre-rendered server data first, then keeps in sync via AJAX events.
  */
 
 /* global cmFrontendData, jQuery */
@@ -35,12 +35,41 @@ function scheduleFetch( delay = 300 ) {
 	debounceTimer = setTimeout( fetchProgress, delay );
 }
 
-// ── Classic WooCommerce AJAX cart events ──────────────────────────────────
-// Use a single handler to avoid duplicate fetches on page load.
-let _initialFetchDone = false;
+/**
+ * Read pre-rendered JSON embedded by PHP (FrontendRenderer) and dispatch
+ * the progress-updated event immediately — zero network round-trip.
+ */
+function hydrateFromPreload() {
+	const scripts = document.querySelectorAll( 'script.cm-progress-preload-data' );
+	if ( ! scripts.length ) return false;
+
+	let data = null;
+	scripts.forEach( script => {
+		try {
+			const parsed = JSON.parse( script.textContent );
+			if ( Array.isArray( parsed ) && parsed.length ) {
+				data = parsed;
+			}
+		} catch { /* malformed JSON — skip */ }
+	} );
+
+	if ( data ) {
+		window.dispatchEvent( new CustomEvent( 'cm:progress-updated', { detail: data } ) );
+		return true;
+	}
+	return false;
+}
+
+// ── On page load: hydrate instantly from pre-rendered data ────────────────
+const hydrated = hydrateFromPreload();
+if ( ! hydrated ) {
+	scheduleFetch( 0 );
+}
+
+// ── Cart update events ────────────────────────────────────────────────────
+let _initialFetchDone = hydrated;
 
 if ( typeof jQuery !== 'undefined' ) {
-	// wc_fragments_loaded fires once on page load — use it as the initial trigger.
 	jQuery( document ).one( 'wc_fragments_loaded wc-cart-fragments-loaded', () => {
 		if ( ! _initialFetchDone ) {
 			_initialFetchDone = true;
@@ -48,23 +77,22 @@ if ( typeof jQuery !== 'undefined' ) {
 		}
 	} );
 
-	// Subsequent AJAX cart changes.
 	jQuery( document ).on(
 		'wc_fragments_refreshed added_to_cart removed_from_cart cart_page_refreshed',
 		() => scheduleFetch()
 	);
 }
 
-// ── WooCommerce Blocks ────────────────────────────────────────────────────
 document.addEventListener( 'wc-blocks_added_to_cart',     () => scheduleFetch() );
 document.addEventListener( 'wc-blocks_removed_from_cart', () => scheduleFetch() );
 document.addEventListener( 'wc-blocks_cart_updated',      () => scheduleFetch() );
 
-// ── After JS injection ────────────────────────────────────────────────────
-window.addEventListener( 'cm:inject-complete', () => scheduleFetch( 100 ) );
+window.addEventListener( 'cm:inject-complete', () => {
+	if ( ! hydrateFromPreload() ) {
+		scheduleFetch( 100 );
+	}
+} );
 
-// ── Qty input observer fallback ───────────────────────────────────────────
-// Only watch quantity inputs changing — not the whole cart DOM.
 const qtyForms = document.querySelectorAll( '.woocommerce-cart-form' );
 qtyForms.forEach( form => {
 	form.addEventListener( 'change', e => {
@@ -72,14 +100,6 @@ qtyForms.forEach( form => {
 			scheduleFetch( 600 );
 		}
 	} );
-} );
-
-// ── Initial page load fallback if jQuery events don't fire ────────────────
-document.addEventListener( 'DOMContentLoaded', () => {
-	if ( ! _initialFetchDone ) {
-		_initialFetchDone = true;
-		fetchProgress();
-	}
 } );
 
 export { fetchProgress };
