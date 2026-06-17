@@ -1,27 +1,37 @@
-/* Cart Milestones — Mini Cart Widget */
+/* Boostcart — Mini Cart Widget */
 
 .cm-mini-cart-widget {
-	padding: 8px 12px;
+	padding: 10px 12px;
 	border-bottom: 1px solid #ebebeb;
 }
 
-.cm-mini-cart-widget__message {
-	font-size: 13px;
-	color: #4d4d4d;
-	margin: 0 0 6px;
+.cm-mc-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 6px;
 }
 
-.cm-mini-cart-widget__bar {
+.cm-mc-emoji { font-size: 18px; flex-shrink: 0; }
+
+.cm-mc-bar-wrap { flex: 1; }
+
+.cm-mc-bar {
 	height: 6px;
-	background: #f5f5f5;
+	background: #f0f0f0;
 	border-radius: 100px;
 	overflow: hidden;
-	box-shadow: inset 0 0 0 1px #ebebeb;
 }
 
-.cm-mini-cart-widget__fill {
+.cm-mc-fill {
 	height: 100%;
 	background: #171717;
 	border-radius: 100px;
-	transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cm-mc-msg {
+	font-size: 12px;
+	color: #555;
+	margin: 0;
+	line-height: 1.4;
 }

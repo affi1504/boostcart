@@ -33,7 +33,7 @@ class ProgressController {
 	}
 
 	public function get_progress( \WP_REST_Request $request ): \WP_REST_Response {
-		// Force-load the WC cart session — it's not initialised for REST requests.
+		// Force-load the WC cart session — not initialised for REST requests.
 		if ( ! WC()->cart || ! did_action( 'woocommerce_cart_loaded_from_session' ) ) {
 			if ( function_exists( 'wc_load_cart' ) ) {
 				wc_load_cart();
@@ -45,35 +45,10 @@ class ProgressController {
 		}
 
 		if ( ! WC()->cart ) {
-			Logger::info( '[progress] WC cart not available after load attempt' );
 			return new \WP_REST_Response( [], 200 );
 		}
 
-		$cart_total = (float) WC()->cart->get_cart_contents_total();
-		$cart_items = [];
-		foreach ( WC()->cart->get_cart() as $item ) {
-			$cart_items[] = [
-				'product_id' => $item['product_id'],
-				'qty'        => $item['quantity'],
-				'line_total' => $item['line_total'] ?? 0,
-			];
-		}
-
-		Logger::info( '[progress] cart state', [
-			'cart_total'       => $cart_total,
-			'cart_item_count'  => count( $cart_items ),
-			'cart_items'       => $cart_items,
-			'session_id'       => WC()->session ? WC()->session->get_customer_id() : 'none',
-			'cart_loaded_hook' => did_action( 'woocommerce_cart_loaded_from_session' ),
-		] );
-
 		$active = $this->evaluator->get_active_for_cart();
-
-		Logger::info( '[progress] evaluator returned', [
-			'active_campaigns' => count( $active ),
-			'campaign_ids'     => array_map( fn( $e ) => $e['campaign']['id'], $active ),
-		] );
-
 		$result = [];
 
 		foreach ( $active as $entry ) {
@@ -81,24 +56,13 @@ class ProgressController {
 			$milestones = $entry['milestones'];
 			$state      = $this->calculator->calculate( $milestones );
 
-			// Log per-milestone evaluation.
-			Logger::info( '[progress] milestones for campaign ' . $campaign['id'], array_map( function ( $ms ) {
-				return [
-					'id'            => $ms['id'],
-					'label'         => $ms['label'],
-					'trigger_type'  => $ms['trigger_type'],
-					'threshold'     => $ms['threshold_value'],
-					'current_value' => $ms['current_value'],
-					'earned'        => $ms['earned'],
-				];
-			}, $milestones ) );
-
 			$next    = $state['next_milestone'];
 			$message = '';
 
 			if ( $next ) {
-				$template  = $next['message_template'] ?? '';
-				$remaining = max( 0.0, (float) $next['threshold_value'] - (float) $next['current_value'] );
+				$template       = $next['message_template'] ?? '';
+				$trigger_type   = $next['trigger_type'] ?? 'cart_value';
+				$remaining      = max( 0.0, (float) $next['threshold_value'] - (float) $next['current_value'] );
 				$progress_state = [
 					'remaining'     => $remaining,
 					'current_value' => $next['current_value'],
@@ -108,17 +72,8 @@ class ProgressController {
 				$message = $template
 					? $this->renderer->render( $template, $progress_state, $next )
 					: $this->renderer->default_message( $progress_state, $next );
-
-				Logger::info( '[progress] message built', [
-					'campaign_id'    => $campaign['id'],
-					'next_milestone' => $next['label'],
-					'remaining'      => $remaining,
-					'template'       => $template ?: '(default)',
-					'message'        => $message,
-				] );
 			} elseif ( $state['all_earned'] ) {
 				$message = $this->renderer->default_message( [ 'all_earned' => true, 'remaining' => 0 ], null );
-				Logger::info( '[progress] all milestones earned for campaign ' . $campaign['id'] );
 			}
 
 			$result[] = [
@@ -130,8 +85,6 @@ class ProgressController {
 				'all_milestones' => $milestones,
 			];
 		}
-
-		Logger::info( '[progress] response', [ 'count' => count( $result ) ] );
 
 		return new \WP_REST_Response( $result, 200 );
 	}

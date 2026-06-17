@@ -133,24 +133,32 @@ function escHtml( str ) {
 	return str.replace( /[&<>"']/g, m => ( { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } )[ m ] );
 }
 
+// Track previously earned milestone IDs to detect newly-earned ones.
+let _prevEarnedIds = new Set();
+
 window.addEventListener( 'cm:progress-updated', e => {
 	const campaigns = e.detail || [];
 	if ( ! campaigns.length ) return;
 
-	// Compute current cart hash from first campaign's first earned milestone id array.
-	const earnedIds = campaigns.flatMap( c => ( c.progress.earned_milestones || [] ).map( m => m.id ) );
-	const cartHash  = earnedIds.sort().join( '_' ) || 'empty';
+	const settings  = window.cmFrontendData?.celebrations || [ 'confetti', 'toast' ];
+	const earnedIds = campaigns.flatMap( c => ( c.progress.earned_milestones || [] ).map( m => String( m.id ) ) );
+	const cartHash  = [ ...earnedIds ].sort().join( '_' ) || 'empty';
 
-	campaigns.forEach( campaign => {
-		const earned = campaign.progress.earned_milestones || [];
-		const cels   = earned.map( ms => ( {
-			milestone_id: ms.id,
-			label:        ms.label || campaign.campaign_name,
-			types:        window.cmFrontendData?.celebrations || [ 'confetti', 'toast' ],
-		} ) );
-
-		if ( cels.length ) {
-			triggerCelebrations( cels, cartHash );
-		}
+	// Only celebrate milestones that were NOT earned on the previous fetch — i.e. newly earned.
+	const newlyEarned = campaigns.flatMap( campaign => {
+		return ( campaign.progress.earned_milestones || [] )
+			.filter( ms => ! _prevEarnedIds.has( String( ms.id ) ) )
+			.map( ms => ( {
+				milestone_id: ms.id,
+				label:        ms.label || campaign.campaign_name,
+				types:        settings,
+			} ) );
 	} );
+
+	// Update previous state.
+	_prevEarnedIds = new Set( earnedIds );
+
+	if ( newlyEarned.length ) {
+		triggerCelebrations( newlyEarned, cartHash );
+	}
 } );

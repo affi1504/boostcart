@@ -174,15 +174,44 @@ class CampaignEvaluator {
 	}
 
 	private function item_in_categories( int $product_id, array $category_ids ): bool {
-		// has_term() requires term cache to be populated, which doesn't happen
-		// in REST context. Use wc_get_product() instead — it loads term data directly.
+		if ( ! $product_id || empty( $category_ids ) ) {
+			return false;
+		}
+
 		$product = wc_get_product( $product_id );
 		if ( ! $product ) {
 			return false;
 		}
-		$product_cats = $product->get_category_ids();
+
+		// For variations, use the parent product's categories.
+		if ( $product->is_type( 'variation' ) ) {
+			$product = wc_get_product( $product->get_parent_id() );
+			if ( ! $product ) {
+				return false;
+			}
+		}
+
+		// Direct category IDs on the product.
+		$product_cats = array_map( 'intval', $product->get_category_ids() );
+
+		// Also include ancestor categories so a product in a child
+		// category still matches a parent category trigger.
+		$all_cats = $product_cats;
+		foreach ( $product_cats as $cat_id ) {
+			$ancestors = get_ancestors( $cat_id, 'product_cat', 'taxonomy' );
+			$all_cats  = array_merge( $all_cats, $ancestors );
+		}
+		$all_cats = array_unique( $all_cats );
+
+		\CartMilestones\Core\Logger::info( '[category_check]', [
+			'product_id'     => $product_id,
+			'product_cats'   => $product_cats,
+			'all_cats'       => $all_cats,
+			'looking_for'    => array_map( 'intval', $category_ids ),
+		] );
+
 		foreach ( $category_ids as $cat_id ) {
-			if ( in_array( (int) $cat_id, $product_cats, true ) ) {
+			if ( in_array( (int) $cat_id, $all_cats, true ) ) {
 				return true;
 			}
 		}

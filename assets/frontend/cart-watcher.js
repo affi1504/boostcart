@@ -1,7 +1,6 @@
 /**
  * Boostcart — Cart Watcher
- * Listens for all WooCommerce cart update events (classic AJAX + Blocks)
- * and refreshes all CM widgets.
+ * Listens for WooCommerce cart update events and refreshes CM widgets.
  */
 
 /* global cmFrontendData, jQuery */
@@ -12,7 +11,6 @@ let debounceTimer = null;
 async function fetchProgress() {
 	if ( isRefreshing ) return;
 	isRefreshing = true;
-	console.log( '[Boostcart] fetchProgress triggered' );
 
 	try {
 		const res = await fetch( cmFrontendData.restUrl + 'progress', {
@@ -22,70 +20,66 @@ async function fetchProgress() {
 			},
 		} );
 
-		console.log( '[Boostcart] progress response status:', res.status );
-		if ( ! res.ok ) {
-			console.warn( '[Boostcart] progress response not ok:', res.status );
-			return;
-		}
+		if ( ! res.ok ) return;
 		const data = await res.json();
-		console.log( '[Boostcart] progress data:', JSON.stringify( data, null, 2 ) );
 		window.dispatchEvent( new CustomEvent( 'cm:progress-updated', { detail: data } ) );
-	} catch ( err ) {
-		console.error( '[Boostcart] fetchProgress error:', err );
+	} catch {
+		// Silently ignore — widgets stay in their current state.
 	} finally {
 		isRefreshing = false;
 	}
 }
 
-// Debounce so rapid successive events don't fire multiple fetches.
 function scheduleFetch( delay = 300 ) {
 	clearTimeout( debounceTimer );
 	debounceTimer = setTimeout( fetchProgress, delay );
 }
 
 // ── Classic WooCommerce AJAX cart events ──────────────────────────────────
+// Use a single handler to avoid duplicate fetches on page load.
+let _initialFetchDone = false;
+
 if ( typeof jQuery !== 'undefined' ) {
-	const cartEvents = [
-		'wc_fragments_refreshed',
-		'wc-cart-fragments-loaded',
-		'added_to_cart',
-		'removed_from_cart',
-		'cart_page_refreshed',
-		'woocommerce_cart_updated',
-	];
-	jQuery( document ).on( cartEvents.join( ' ' ), ( e ) => {
-		console.log( '[Boostcart] jQuery cart event fired:', e.type );
-		scheduleFetch();
+	// wc_fragments_loaded fires once on page load — use it as the initial trigger.
+	jQuery( document ).one( 'wc_fragments_loaded wc-cart-fragments-loaded', () => {
+		if ( ! _initialFetchDone ) {
+			_initialFetchDone = true;
+			fetchProgress();
+		}
 	} );
 
-	jQuery( document ).on( 'wc_fragments_loaded', () => {
-		console.log( '[Boostcart] wc_fragments_loaded fired' );
-		scheduleFetch( 100 );
-	} );
+	// Subsequent AJAX cart changes.
+	jQuery( document ).on(
+		'wc_fragments_refreshed added_to_cart removed_from_cart cart_page_refreshed',
+		() => scheduleFetch()
+	);
 }
 
-// ── WooCommerce Blocks (store-api / checkout block) ───────────────────────
-// The Blocks cart fires custom DOM events instead of jQuery events.
+// ── WooCommerce Blocks ────────────────────────────────────────────────────
 document.addEventListener( 'wc-blocks_added_to_cart',     () => scheduleFetch() );
 document.addEventListener( 'wc-blocks_removed_from_cart', () => scheduleFetch() );
 document.addEventListener( 'wc-blocks_cart_updated',      () => scheduleFetch() );
 
-// ── MutationObserver fallback ─────────────────────────────────────────────
-// Only observe quantity inputs, not the whole cart — watching .cart_totals
-// fires on every WC recalculation creating an infinite loop.
+// ── After JS injection ────────────────────────────────────────────────────
+window.addEventListener( 'cm:inject-complete', () => scheduleFetch( 100 ) );
+
+// ── Qty input observer fallback ───────────────────────────────────────────
+// Only watch quantity inputs changing — not the whole cart DOM.
 const qtyForms = document.querySelectorAll( '.woocommerce-cart-form' );
 qtyForms.forEach( form => {
-	const observer = new MutationObserver( ( mutations ) => {
-		// Only react to actual qty input value changes, not style/class updates.
-		const relevant = mutations.some( m =>
-			m.type === 'childList' && m.addedNodes.length > 0
-		);
-		if ( relevant ) scheduleFetch( 800 );
+	form.addEventListener( 'change', e => {
+		if ( e.target.classList.contains( 'qty' ) || e.target.name?.includes( 'qty' ) ) {
+			scheduleFetch( 600 );
+		}
 	} );
-	observer.observe( form, { childList: true, subtree: false } );
 } );
 
-// ── After JS injection, immediately fetch progress ────────────────────────
-window.addEventListener( 'cm:inject-complete', () => scheduleFetch( 100 ) );
+// ── Initial page load fallback if jQuery events don't fire ────────────────
+document.addEventListener( 'DOMContentLoaded', () => {
+	if ( ! _initialFetchDone ) {
+		_initialFetchDone = true;
+		fetchProgress();
+	}
+} );
 
 export { fetchProgress };

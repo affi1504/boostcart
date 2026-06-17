@@ -89,10 +89,18 @@ class Assets {
 			'cm-frontend-cart-watcher',
 			'cmFrontendData',
 			[
-				'restUrl'   => esc_url_raw( rest_url( 'boostcart/v1/' ) ),
-				'nonce'     => wp_create_nonce( 'wp_rest' ),
-				'ajax'      => admin_url( 'admin-ajax.php' ),
-				'locations' => $locations,
+				'restUrl'       => esc_url_raw( rest_url( 'boostcart/v1/' ) ),
+				'nonce'         => wp_create_nonce( 'wp_rest' ),
+				'ajax'          => admin_url( 'admin-ajax.php' ),
+				'locations'     => $locations,
+				'progressStyle' => $settings['progress_style'] ?? 'classic',
+				'currency'      => [
+					'symbol'    => html_entity_decode( get_woocommerce_currency_symbol() ),
+					'position'  => get_option( 'woocommerce_currency_pos' ),
+					'decimals'  => wc_get_price_decimals(),
+					'separator' => wc_get_price_decimal_separator(),
+					'thousand'  => wc_get_price_thousand_separator(),
+				],
 			]
 		);
 	}
