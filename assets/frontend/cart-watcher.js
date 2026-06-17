@@ -12,6 +12,7 @@ let debounceTimer = null;
 async function fetchProgress() {
 	if ( isRefreshing ) return;
 	isRefreshing = true;
+	console.log( '[Boostcart] fetchProgress triggered' );
 
 	try {
 		const res = await fetch( cmFrontendData.restUrl + 'progress', {
@@ -21,11 +22,16 @@ async function fetchProgress() {
 			},
 		} );
 
-		if ( ! res.ok ) return;
+		console.log( '[Boostcart] progress response status:', res.status );
+		if ( ! res.ok ) {
+			console.warn( '[Boostcart] progress response not ok:', res.status );
+			return;
+		}
 		const data = await res.json();
+		console.log( '[Boostcart] progress data:', JSON.stringify( data, null, 2 ) );
 		window.dispatchEvent( new CustomEvent( 'cm:progress-updated', { detail: data } ) );
-	} catch {
-		// Network errors — widgets stay in current state.
+	} catch ( err ) {
+		console.error( '[Boostcart] fetchProgress error:', err );
 	} finally {
 		isRefreshing = false;
 	}
@@ -39,18 +45,23 @@ function scheduleFetch( delay = 300 ) {
 
 // ── Classic WooCommerce AJAX cart events ──────────────────────────────────
 if ( typeof jQuery !== 'undefined' ) {
-	jQuery( document ).on(
-		'wc_fragments_refreshed'    + ' ' +  // Cart fragments reloaded after AJAX
-		'wc-cart-fragments-loaded'  + ' ' +  // Fragments loaded on page load
-		'added_to_cart'             + ' ' +  // Product added via AJAX
-		'removed_from_cart'         + ' ' +  // Product removed via AJAX
-		'cart_page_refreshed'       + ' ' +  // WooCommerce Blocks cart page refresh
-		'woocommerce_cart_updated',           // Any cart change
-		() => scheduleFetch()
-	);
+	const cartEvents = [
+		'wc_fragments_refreshed',
+		'wc-cart-fragments-loaded',
+		'added_to_cart',
+		'removed_from_cart',
+		'cart_page_refreshed',
+		'woocommerce_cart_updated',
+	];
+	jQuery( document ).on( cartEvents.join( ' ' ), ( e ) => {
+		console.log( '[Boostcart] jQuery cart event fired:', e.type );
+		scheduleFetch();
+	} );
 
-	// Mini cart opened/refreshed.
-	jQuery( document ).on( 'wc_fragments_loaded', () => scheduleFetch( 100 ) );
+	jQuery( document ).on( 'wc_fragments_loaded', () => {
+		console.log( '[Boostcart] wc_fragments_loaded fired' );
+		scheduleFetch( 100 );
+	} );
 }
 
 // ── WooCommerce Blocks (store-api / checkout block) ───────────────────────
