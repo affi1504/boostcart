@@ -71,14 +71,19 @@ document.addEventListener( 'wc-blocks_removed_from_cart', () => scheduleFetch() 
 document.addEventListener( 'wc-blocks_cart_updated',      () => scheduleFetch() );
 
 // ── MutationObserver fallback ─────────────────────────────────────────────
-// For headless/custom carts that don't fire standard WC events, watch for
-// DOM changes inside the WC cart container.
-const cartSelector = '.woocommerce-cart-form, .wp-block-woocommerce-cart, .cart_totals';
-const cartRoot     = document.querySelector( cartSelector );
-if ( cartRoot ) {
-	const observer = new MutationObserver( () => scheduleFetch( 500 ) );
-	observer.observe( cartRoot, { childList: true, subtree: true, attributes: true, attributeFilter: [ 'class', 'data-block-name' ] } );
-}
+// Only observe quantity inputs, not the whole cart — watching .cart_totals
+// fires on every WC recalculation creating an infinite loop.
+const qtyForms = document.querySelectorAll( '.woocommerce-cart-form' );
+qtyForms.forEach( form => {
+	const observer = new MutationObserver( ( mutations ) => {
+		// Only react to actual qty input value changes, not style/class updates.
+		const relevant = mutations.some( m =>
+			m.type === 'childList' && m.addedNodes.length > 0
+		);
+		if ( relevant ) scheduleFetch( 800 );
+	} );
+	observer.observe( form, { childList: true, subtree: false } );
+} );
 
 // ── After JS injection, immediately fetch progress ────────────────────────
 window.addEventListener( 'cm:inject-complete', () => scheduleFetch( 100 ) );

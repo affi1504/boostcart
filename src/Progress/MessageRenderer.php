@@ -25,10 +25,10 @@ class MessageRenderer {
 		$threshold  = $milestone ? (float) $milestone['threshold_value'] : 0.0;
 
 		$replacements = [
-			'{remaining}'     => wp_strip_all_tags( wc_price( $remaining ) ),
+			'{remaining}'     => html_entity_decode( wp_strip_all_tags( wc_price( $remaining ) ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ),
 			'{label}'         => esc_html( $label ),
-			'{threshold}'     => wp_strip_all_tags( wc_price( $threshold ) ),
-			'{current}'       => wp_strip_all_tags( wc_price( $current ) ),
+			'{threshold}'     => html_entity_decode( wp_strip_all_tags( wc_price( $threshold ) ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ),
+			'{current}'       => html_entity_decode( wp_strip_all_tags( wc_price( $current ) ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ),
 			'{percent}'       => number_format( $percent, 0 ),
 			'{qty_remaining}' => (string) max( 0, (int) ceil( $remaining ) ),
 		];

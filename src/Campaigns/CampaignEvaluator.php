@@ -174,8 +174,15 @@ class CampaignEvaluator {
 	}
 
 	private function item_in_categories( int $product_id, array $category_ids ): bool {
+		// has_term() requires term cache to be populated, which doesn't happen
+		// in REST context. Use wc_get_product() instead — it loads term data directly.
+		$product = wc_get_product( $product_id );
+		if ( ! $product ) {
+			return false;
+		}
+		$product_cats = $product->get_category_ids();
 		foreach ( $category_ids as $cat_id ) {
-			if ( has_term( (int) $cat_id, 'product_cat', $product_id ) ) {
+			if ( in_array( (int) $cat_id, $product_cats, true ) ) {
 				return true;
 			}
 		}
@@ -197,15 +204,24 @@ class CampaignEvaluator {
 	private function build_context(): array {
 		$cart       = WC()->cart;
 		$cart_items = [];
+		$cart_total = 0.0;
 
 		foreach ( $cart->get_cart() as $key => $item ) {
+			$line_total  = (float) ( $item['line_total'] ?? 0.0 );
+			$cart_total += $line_total;
 			$cart_items[] = [
 				'key'          => $key,
 				'product_id'   => (int) $item['product_id'],
 				'variation_id' => (int) ( $item['variation_id'] ?? 0 ),
 				'quantity'     => (int) $item['quantity'],
-				'line_total'   => (float) ( $item['line_total'] ?? 0.0 ),
+				'line_total'   => $line_total,
 			];
+		}
+
+		// Fall back to WC cart total if available and non-zero.
+		$wc_total = (float) $cart->get_cart_contents_total();
+		if ( $wc_total > 0 ) {
+			$cart_total = $wc_total;
 		}
 
 		$customer_roles = [];
